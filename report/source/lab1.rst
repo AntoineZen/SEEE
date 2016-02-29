@@ -1,7 +1,4 @@
 
-===================
-SEEE lab notes
-===================
 
 
 REPTAR Introduction
