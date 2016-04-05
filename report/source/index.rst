@@ -12,8 +12,7 @@ Contents:
    :maxdepth: 2
 
    lab1
-
-.. include:: lab1.rst
+   lab2 
 
 
 

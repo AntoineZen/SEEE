@@ -32,7 +32,7 @@ We can then run the Emulator direcly from Eclipse. For that select *Run -> Debug
 
 We can pause the Emulator exectution:
 
-	.. image::qemu_debugger.png
+	.. image:: qemu_debugger.png
 
 We can see that the emulator is stopped int the __GI_pppoll() function. We can then stop the execution.
 
@@ -173,7 +173,7 @@ And Then we can start the loaded image as we know the loading address of the ima
 
 We can then debug this application. For this, First start the emulator with the `./stf` script. Then in Ecplipse we select the **helloworld_u-boot Debug** debug confiuration. The debuger start but noting appends. We need to load manualy the image in U-Boot as described above. We have have then the debugger ready in elcpise:
 
-	.. image: uboot_helloworld_debug.png
+	.. image:: uboot_helloworld_debug.png
 
 
 4) Linux test
@@ -550,7 +550,7 @@ We can start as well a Qt demo and see it in the emulator windows. For this, we 
 
 We can then see the following graphics inside the QEMU windows:
 
-	.. image :: qt_screenshot.png
+	.. image:: qt_screenshot.png
 
 
 
