@@ -554,6 +554,31 @@ We can then see the following graphics inside the QEMU windows:
 
 
 
+5) Test on real platform
+------------------------
+
+On this this step we will load the U-Boot helloworld program as we did in step 3, but this time on the REPTAR hardware. For this we need to connect the REPTAR to the host PC using Ethernet and USB. The USB connection is emulating a Serial port on the host PC. The Ethernet Interface on the PC also needs to be configured to have the IP **192.168.1.1** as the U-Boot on the Hardware is configured to download from this address. We need to open the serial port with an appropriate program::
+
+    $ sudo picocom -b 115200 /dev/ttyUSB0
+    
+We have now access to the REPATR U-Boot console. We need first to setup the networking paramteres using the predefined command:
+
+    Reptar # run setmac setip
+    
+Once this is done, we can transfer the application using TFTP::
+
+    Reptar # tftp helloworld_u-boot
+    
+And we can run it:
+
+    Reptar # go 0x81600000
+
+
+
+
+6) REPTAR periferal access
+--------------------------
+
 
 
 
