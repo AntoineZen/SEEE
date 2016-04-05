@@ -129,7 +129,7 @@ The ``reptar_sp6_info`` structure names the periferal. This name will be used in
         s->sp6 = sysbus_create_simple("reptar_sp6", 0x18000000, NULL);
     }
     
-The above code adds the Spartan 6 periferal of type *"reptar_sp6"* to the system bus at address 0x18000000. 
+The above code adds the Spartan 6 periferal of type *"reptar_sp6"* to the system bus at base address **0x18000000**. 
 
 The ``reptar_sp6_info`` structure also poins to two functions, ``sp6_init()`` and ``sp6_class_init()``.
 
@@ -244,5 +244,119 @@ We see the output of the ``printf()`` stament implemented in the ``sp6_write()``
 3) LED devices emulation
 ------------------------
 
+Once the Spartan 6 periferal is created and reachable from the emulated CPU, we need to implement the periferal behavior. The first part will be the LED output. The LEDS are driven by a single register. Each bit represent a LED. The offset for this register is **0x003a**.
 
-TBD
+To emulate the registers, we create a data structre as following:
+
+.. code-block:: c
+
+    typedef struct
+    {
+    	// Register address
+    	uint32_t addr;
+    	// Register value
+    	uint32_t value;
+    	// Callback that will be called on write
+    	void (*write_callback)(uint32_t value);
+    }
+    fake_reg;
+    
+This structure contains the address of the register, its address, and a pointer to callback function that will be used to do some action when the register is written. This structure is then used to construct the register map as a static array of those structure:
+
+.. code-block:: c
+
+    #define LED_REG	0x003A
+    #define GUARD_REG 0xFFFFFFFF
+    
+    static fake_reg sp6_reg_state[] =
+    {
+    		// {addr, value, write_callback}
+    		{LED_REG, 0, leds_write},
+    		{GUARD_REG, 0, NULL},
+    };
+
+The ``GUARD_RED`` will be used to break the loop when the last element is reached. We can modify the ``sp6_read()`` so that the value of the register value is return when reading it: 
+
+
+.. code-block:: c
+
+    static uint64_t sp6_read(void *opaque, hwaddr addr, unsigned size)
+    {
+    	fake_reg* reg = (fake_reg*)opaque;
+    	printf("sp6_read(%x, %x, %x)\n", (int)opaque, (uint64_t)addr, size);
+    
+    	// Look for the address, until we reach it or the guard register
+    	while(reg->addr != addr && reg->addr != GUARD_REG)
+    	{
+    		reg++;
+    	}
+    	// If we matched the readen address to an existing register, return its value
+    	if( reg->addr == addr)
+    	{
+    		return reg->value;
+    	}
+    	// Else, we read 0
+    	return 0;
+    }
+
+
+The ``sp6_write()``function is modified in a similar way. In addition, it call the callback function if its defined:
+
+.. code-block:: c
+
+    static void sp6_write(void *opaque,  hwaddr addr, uint64_t data, unsigned size)
+    {
+    	printf("sp6_write(%x, %x, %x, %x)\n", (int)opaque, (uint64_t)addr, (int)data, size);
+    
+    	fake_reg* reg = (fake_reg*)opaque;
+    
+    	// Look for the register by its address, until we reach it or the guard register
+    	while(reg->addr != addr && reg->addr != GUARD_REG)
+    	{
+    		reg++;
+    	}
+    
+    	// If we matched the readen address to an existing register, modify it
+    	if( reg->addr == addr)
+    	{
+    		reg->value = (uint32_t)data;
+    
+    		// If a callback is defined, call it passing the written data
+    		if(reg->write_callback != NULL)
+    		{
+    			reg->write_callback((uint32_t)data);
+    		}
+    	}
+    	else
+    	{
+    		// For debug
+    		printf("ERROR: Register 0x%x not found!\n");
+    	}
+    }
+
+Then we need to implement the callback for the LED register. This function simply pass the value to the fontend:
+
+.. code-block:: c
+
+    void leds_write(uint32_t value)
+    {
+    	printf("Led write");
+    
+    	// Create the JSON object containing the data
+    	cJSON* root = cJSON_CreateObject();
+    	cJSON_AddStringToObject(root, "perif", "led");
+    	cJSON_AddNumberToObject(root, "value", value);
+    
+    	// Pass it to the front-end
+    	sp6_emul_cmd_post(root);
+    }
+    
+We can then test by writing any value to the address 0x1800003A from the U-Boot prompt::
+
+    TBD
+    
+
+
+
+
+
