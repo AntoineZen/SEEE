@@ -300,7 +300,7 @@ The ``GUARD_RED`` will be used to break the loop when the last element is reache
     }
 
 
-The ``sp6_write()``function is modified in a similar way. In addition, it call the callback function if its defined:
+The ``sp6_write()`` function is modified in a similar way. In addition, it call the callback function if its defined:
 
 .. code-block:: c
 
@@ -351,12 +351,268 @@ Then we need to implement the callback for the LED register. This function simpl
     	sp6_emul_cmd_post(root);
     }
     
-We can then test by writing any value to the address 0x1800003A from the U-Boot prompt::
+We can then test by writing any value to the address 0x1800003A from the U-Boot prompt (again using the ``mw.b`` command::
 
-    TBD
+    Reptar # mw.b 0x1800003A 0xAA
+    sp6_write(e5a85920, 3a, aa, 1)
+    Led writereptar-sp6-emul: sp6_emul_cmd_post
+    reptar-sp6-emul: sp6_emul_cmd_post Inserting into queue...
+    reptar-sp6-emul: sp6_emul_cmd_post ...done
+    
+    
+The front end then shows the patern 0xAA on the LEDs:
+
+    .. image:: stq_result.png
+    
+4) Button emulation
+--------------------
+
+In this part, we are required to make the button availabe to the software. For this, a call back will modify the register values. This callback is already provided in the file ``reptar_sp6_button.c`` and is called ``reptar_sp6_btns_event_process()``.
+
+We will need to make the register acessible to functions in ``reptar_sp6_button.c``. For this we modified the structre provided in ``repstar_sp6.h`` to add it the register strucure:
+
+.. code-block:: c
+
+    /**
+     * Desrcrite an hardware register.
+     */
+    typedef struct
+    {
+    	// Register address
+    	uint32_t addr;
+    	// Register value
+    	uint32_t value;
+    	// Callback that will be called on write
+    	void (*write_callback)(uint32_t value);
+    }
+    fake_reg;
+    
+    typedef struct
+    {
+        SysBusDevice busdev;
+        MemoryRegion iomem;
+        fake_reg* regs;		/* 1KB (512 * 16bits registers) register map */
+    
+        qemu_irq irq;
+        int irq_pending;
+        int irq_enabled;
+    } sp6_state_t;
+
+We need then to intialize a such structure in ``reptar_sp6.c``:
+
+.. code-block:: c
+
+    static fake_reg sp6_reg_state[] =
+    {
+    		// {addr, value, write_callback}
+    		{PUSH_BUT_REG, 0, NULL},
+    		{LED_REG, 0, leds_write},
+    		{GUARD_REG, 0, 0},
+    };
+
+    static sp6_state_t sp6_state = {.regs=sp6_reg_state};
+    
+**Note that we added one register for the push button.**
+    
+In the ``p6_init_fn()`` we need to tell the button handler module ``reptar_sp6_buttons.c`` where to find this structure:
+
+.. code-block:: c
+
+	// Tell the button driver where to find the device state.
+	reptar_sp6_btns_init(&sp6_state);
+
+We can add some code in the ``reptar_sp6_btns_event_process()`` callback to modifiy the register value when a button is pressed:
+
+.. code-block:: c
+
+    int reptar_sp6_btns_event_process(cJSON * object)
+    {
+    	//printf("reptar_sp6_btns_event_process()\n");
+    	char* perif_name = cJSON_GetObjectItem(object, "perid")->valuestring;
+    
+    	if(strcmp(perif_name, "btn") == 0)
+    	{
+    		// Find the button register
+    		fake_reg* reg = sp6_state->regs;
+    		while(reg->addr != PUSH_BUT_REG && reg->addr != GUARD_REG)
+    		{
+    			reg++;
+    		}
+    		// Modify it if it was found
+    		if(reg->addr == PUSH_BUT_REG)
+    		{
+    			reg->value = cJSON_GetObjectItem(object, "status")->valueint;;
+    		}
+    	}
+    	return 0;
+    }
+
+
+A small program is available to test the button functionality. We can compile it and make it avaialbe to the emulator and U-Boot using TFTP:
+   
+.. code-block:: console
+
+    redsuser@vm-reds-2015s2:~/seee_student$ cd sp6_buttons_u-boot/
+    redsuser@vm-reds-2015s2:~/seee_student/sp6_buttons_u-boot$ make
+    arm-linux-gnueabihf-gcc -g  -O0  -fno-common -ffixed-r8 -msoft-float  -D__KERNEL__ -DCONFIG_SYS_TEXT_BASE=0x80008000 -Iinclude -fno-builtin -ffreestanding -nostdinc -isystem /opt/linaro-arm-linux-gnueabihf/bin/../lib/gcc/arm-linux-gnueabihf/4.7.3/include -pipe  -DCONFIG_ARM -D__ARM__ -marm  -mabi=aapcs-linux -mno-thumb-interwork -march=armv5 -Wall -Wstrict-prototypes -c -o stubs.o stubs.c
+    arm-linux-gnueabihf-gcc -g  -O0  -fno-common -ffixed-r8 -msoft-float  -D__KERNEL__ -DCONFIG_SYS_TEXT_BASE=0x80008000 -Iinclude -fno-builtin -ffreestanding -nostdinc -isystem /opt/linaro-arm-linux-gnueabihf/bin/../lib/gcc/arm-linux-gnueabihf/4.7.3/include -pipe  -DCONFIG_ARM -D__ARM__ -marm  -mabi=aapcs-linux -mno-thumb-interwork -march=armv5 -Wall -Wstrict-prototypes -c -o board.o board.c
+    arm-linux-gnueabihf-ar crv libstubs.a stubs.o board.o
+    a - stubs.o
+    a - board.o
+    arm-linux-gnueabihf-gcc -g  -O0  -fno-common -ffixed-r8 -msoft-float  -D__KERNEL__ -DCONFIG_SYS_TEXT_BASE=0x80008000 -Iinclude -fno-builtin -ffreestanding -nostdinc -isystem /opt/linaro-arm-linux-gnueabihf/bin/../lib/gcc/arm-linux-gnueabihf/4.7.3/include -pipe  -DCONFIG_ARM -D__ARM__ -marm  -mabi=aapcs-linux -mno-thumb-interwork -march=armv5 -Wall -Wstrict-prototypes -c -o sp6_buttons.o sp6_buttons.c
+    arm-linux-gnueabihf-ld -g  -Ttext 0x81600000 \
+    			-o sp6_buttons sp6_buttons.o stubs.o board.o \
+    			-L/opt/linaro-arm-linux-gnueabihf/bin/../lib/gcc/arm-linux-gnueabihf/4.7.3 -lgcc
+    arm-linux-gnueabihf-ld: warning: cannot find entry symbol _start; defaulting to 81600000
+    arm-linux-gnueabihf-objcopy -O binary sp6_buttons sp6_buttons.bin 2>/dev/null
+    
+    redsuser@vm-reds-2015s2:~/seee_student/sp6_buttons_u-boot$ cp sp6_buttons ../../tftpboot
+    
+We can then run it from the emulator:
+
+.. code-block:: console
+
+    Reptar # run tftp3
+    smc911x: detected LAN9118 controller
+    smc911x: phy initialized
+    smc911x: MAC e4:af:a1:40:01:fe
+    Using smc911x-0 device
+    TFTP from server 10.0.2.2; our IP address is 10.0.2.10
+    Filename 'sp6_buttons_u-boot/sp6_buttons.bin'.
+    Load address: 0x81600000
+    Loading: #######
+    done
+    Bytes transferred = 34512 (86d0 hex)
+    Reptar # go 0x81600000
+    ## Starting application at 0x81600000 ...
+    Start of the SP6 buttons standalone test application
+    ...
+    Button LEFT pressed
+    Button LEFT pressed
+    Button LEFT pressed
+    Button LEFT pressed
+    Button LEFT pressed
+    Button LEFT pressed
+    Button LEFT pressed
+    Button LEFT pressed
+    Button LEFT pressed
+    ...
     
 
+5) IRQ managment with buttons
+-----------------------------
+
+We will add the IRQ managment to the buttons. For this we need to tell the QUEM that our device have the ablitiy to make IRQ and request an IRQ number. For this we should add the following call to ``sp6_initfn()``:
+
+.. code-block:: c
+
+    static int sp6_initfn(SysBusDevice *dev)
+    {
+        //... (Extra code removed)
+    
+    	// map the IRQ
+    	sysbus_init_irq(dev, &(sp6_state.irq));
+    
+    	return 0;
+    }
+    
+Then we need to map the IRQ to the system bus (witch goes to the CPU) in the platfrom initialization function ``reptar_init()``:
+
+.. code-block:: c
+
+    static void reptar_init(MachineState *machine)
+    {
+        //... (extra code removed
+        s->sp6 = sysbus_create_simple("reptar_sp6", 0x18000000, NULL);
+    
+        sysbus_connect_irq(SYS_BUS_DEVICE(s->sp6), 0, qdev_get_gpio_in(s->cpu->gpio, 10));
+    }
 
 
+We then need a new register for the IRQ control register of the FPGA. This register is at 0x0018. This register is writtabe so, it will get a write call back:
 
+.. code-block:: c
 
+    static void irq_ctl_reg_write(uint32_t value)
+    {
+    	// Manage IRQ Clear
+    	if (value & SP6_IRQ_CLEAR)
+    	{
+    		sp6_state.irq_pending = false;
+    		qemu_irq_lower(sp6_state.irq);
+    	}
+    	// Mangae the enable
+    	if (value & SP6_IRQ_EN)
+    	{
+    		sp6_state.irq_enabled = true;
+    	}
+    	else
+    	{
+    		sp6_state.irq_enabled = false;
+    	}
+    }
+    
+    ...
+    
+    static void irq_ctl_reg_write(uint32_t value);
+    
+    #define IRQ_CTL_REG		0x0018
+    static fake_reg sp6_reg_state[] =
+    {
+    		// {addr, value, write_callback}
+    		{PUSH_BUT_REG, 0, NULL},
+    		{IRQ_CTL_REG, 0, irq_ctl_reg_write},
+    		{LED_REG, 0, leds_write},
+    		{GUARD_REG, 0, 0},
+    };
+    
+
+We then need to trigger the IRQ in the button call-back if they are enable. So we add the following code to ``reptar_sp6_btns_event_process()``:
+
+.. code-block:: c
+
+    int reptar_sp6_btns_event_process(cJSON * object)
+    {
+    	printf("reptar_sp6_btns_event_process()\n");
+    
+    	char* perif_name = cJSON_GetObjectItem(object, "perif")->valuestring;
+    
+    	if (perif_name == NULL)
+    	{
+    		printf("Unable to have perif\n");
+    		return 0;
+    	}
+    
+    	if(strcmp(perif_name, "btn") == 0)
+    	{
+    		int button = cJSON_GetObjectItem(object, "status")->valueint;
+        
+            // ... extra code removed
+    
+    		// Find the IRQ CTR register
+    		fake_reg* irq_reg = sp6_state->regs;
+    		while(irq_reg->addr != IRQ_CTL_REG && irq_reg->addr != GUARD_REG)
+    		{
+    			irq_reg++;
+    		}
+    		// Modify it if it was found
+    		if(irq_reg->addr == IRQ_CTL_REG)
+    		{
+    			if(sp6_state->irq_enabled && !sp6_state->irq_pending)
+    			{
+    				sp6_state->irq_pending = true;
+    				qemu_irq_raise(sp6_state->irq);
+    
+    				irq_reg->value &= ~SP6_IRQ_BTNS_MASK;
+    				irq_reg->value |= SP6_IRQ_STATUS;
+    				irq_reg->value |= (button << 1 ) & SP6_IRQ_BTNS_MASK;
+    				irq_reg->value &= ~SP6_IRQ_SRC_MASK;
+    			}
+    		}
+    	}
+    	return 0;
+    }
+    
+We can then test the IRQ:
+
+TBD
