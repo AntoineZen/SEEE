@@ -444,6 +444,7 @@ We can add some code in the ``reptar_sp6_btns_event_process()`` callback to modi
     			reg->value = cJSON_GetObjectItem(object, "status")->valueint;;
     		}
     	}
+    	cJSON_Delete(object);
     	return 0;
     }
 
@@ -580,6 +581,7 @@ We then need to trigger the IRQ in the button call-back if they are enable. So w
     	if (perif_name == NULL)
     	{
     		printf("Unable to have perif\n");
+    		cJSON_Delete(object);
     		return 0;
     	}
     
@@ -610,9 +612,189 @@ We then need to trigger the IRQ in the button call-back if they are enable. So w
     			}
     		}
     	}
+    	cJSON_Delete(object);
     	return 0;
     }
     
-We can then test the IRQ:
+We can then test the IRQ. First we check the CPU IRQ status register to check that no IRQ is raised. The IPS status  registers for the GPIO where the IRQ of FPGA is connected is called **GPIO_IRQ_STATUS1** and is at address 0x48310018 (see DM37xx manual p. 3517). We can read this register using U-Boot::
 
-TBD
+    Reptar # md.l 0x48310018 1
+    48310018: 00000000    ....
+
+We check also the IRQ status register from the FPGA it-self::
+
+    Reptar # md.w 0x18000018 1
+    18000018: 0000    ..
+
+We will then enable this interupt. This need to be done at CPU level and at FPGA level. For the CPU, we will write ones to the whole enable regsiters. They are two, called **GPIO_RISINGDETECT** and **GPIO_IRQ_ENABLE1** at address 0x48310048 and 0x4831001c. The first one is to select the edge that trigger the IRQ and the second is the general enable register. We need also to enable the IRQ at FPGA level by writting the **IRQ_CTL_REG** at **0x18000018**. For this we neet to set the 8th bit. We can do all this using the U-Boot prompt::
+
+    Reptar # mw.l 0x48310048 0xFFFFFFFF 1
+    Reptar # mw.l 0x4831001c 0xFFFFFFFF 1
+    Reptar # mw.w 0x18000018 0x0080 1
+
+
+We then can check that a button press modifiy the **IRQ_CTL_REG**. We read it just before pressing the button::
+
+    Reptar # md.l 0x48310018 1
+    48310018: 00000000    ....
+    Reptar # md.w 0x18000018
+    18000018: 0080   
+    
+After pressing a button::
+
+    Reptar # md.w 0x18000018
+    18000018: 0092    ..
+    Reptar # md.l 0x48310018 1           
+    8310018: 00000400    ....
+
+    
+We see that the bit 4 was set in the **IRQ_CTRL_REG**. This bit is the **IRQ_STATUS** flag. It show that the IRQ is asserted at FPGA level. We see also that the bit 10 is set in the **GPIO_IRQ_STATUS1** register. This should correspond to tthe mapped IRQ in the the ``qdev_get_gpio_in(s->cpu->gpio, 10)`` call in ``reptar_init()`` function. 
+
+We can check that we can clear the IRQ from the FPGA level::
+   
+    Reptar # mw.w 0x18000018 0x0081 1
+    Reptar # md.w 0x18000018         
+    18000018: 0080    ..
+    
+    
+This shows that the **IRQ_STATUS** flag was cleared (bit 4), but **IRQ_ENABLE** still remains (bit 7). We need to clear also the **GPIO_IRQ_STATUS1** by writing the bit again to '1'::
+
+    Reptar # md.l 0x48310018 1    
+    48310018: 00000400    ....
+    Reptar # mw.l 0x48310018 0x00000400 1
+    Reptar # md.l 0x48310018 1 
+    48310018: 00000000    ....
+    
+6) 7 segment display emulation
+------------------------------
+
+This section is about adding the emulation of the 7 segment perfieral. Thery are 3 "Seven Segment" display connected to the FPGA. They are at address offset from 0x0030 to 0x0034 (each 16 bits). First we have to implement the register that will control the 7 segment. This goes in the same way that for the LEDs in part 3. The code is added is give here after:
+
+.. code-block:: c
+
+    //... (code removed)
+    #define DISP_7SEG1_REG	0x0030
+    #define DISP_7SEG2_REG	0x0032
+    #define DISP_7SEG3_REG	0x0034
+     
+    //... (code removed)
+    static void d7seg1_reg_write(uint32_t* value_ptr);
+    static void d7seg2_reg_write(uint32_t* value_ptr);
+    static void d7seg3_reg_write(uint32_t* value_ptr);
+    
+    static fake_reg sp6_reg_state[] =
+    {
+    		// {addr, value, write_callback}
+    		{PUSH_BUT_REG, 0, NULL},
+    		{IRQ_CTL_REG, 0, irq_ctl_reg_write},
+    		{DISP_7SEG1_REG, 0, d7seg1_reg_write},
+    		{DISP_7SEG2_REG, 0, d7seg2_reg_write},
+    		{DISP_7SEG3_REG, 0, d7seg3_reg_write},
+    		{LED_REG, 0, leds_write},
+    		{GUARD_REG, 0, 0},
+    };
+    
+    static sp6_state_t sp6_state = {.regs=sp6_reg_state};
+    
+    //... (code removed)
+    
+    static void set_7seg(int n, int value)
+    {
+        printf("Writing 7seg %d to %d\n", n, value);
+    	// Create the JSON object containing the data
+    	cJSON* root = cJSON_CreateObject();
+    	cJSON_AddStringToObject(root, "perif", "7seg");
+    	cJSON_AddNumberToObject(root, "digit", n);
+    	cJSON_AddNumberToObject(root, "value", value);
+    
+    	// Pass it to the front-end
+    	sp6_emul_cmd_post(root);
+    }
+    
+    static void d7seg1_reg_write(uint32_t* value_ptr)
+    {
+    	set_7seg(1, *value_ptr);
+    }
+    
+    static void d7seg2_reg_write(uint32_t* value_ptr)
+    {
+    	set_7seg(2, *value_ptr);
+    }
+    
+    static void d7seg3_reg_write(uint32_t* value_ptr)
+    {
+    	set_7seg(3, *value_ptr);
+    }
+    
+    //... (code removed)
+
+
+We can then test the functionality by writing the register from the U-Boot prompt::
+
+    Reptar # mw.w 0x18000030 0x06
+    Writing 7seg 1 to 6
+    reptar-sp6-emul: sp6_emul_cmd_post
+    reptar-sp6-emul: sp6_emul_cmd_post Inserting into queue...
+    reptar-sp6-emul: sp6_emul_cmd_post ...done
+    Reptar # mw.w 0x18000032 0x5B
+    Writing 7seg 2 to 91
+    reptar-sp6-emul: sp6_emul_cmd_post
+    reptar-sp6-emul: sp6_emul_cmd_post Inserting into queue...
+    reptar-sp6-emul: sp6_emul_cmd_post ...done
+    Reptar # mw.w 0x18000034 0x4f 
+    Writing 7seg 3 to 79
+    reptar-sp6-emul: sp6_emul_cmd_post
+    reptar-sp6-emul: sp6_emul_cmd_post Inserting into queue...
+    reptar-sp6-emul: sp6_emul_cmd_post ...done
+    
+
+The following code shows changes the 7 segments on the frontend:
+
+    .. image:: 7seg_active.png
+    
+    
+A test application for the 7 segment is available we can compile it and make it availabe to U-boot via TFTP:
+
+.. code-block:: console
+
+    redsuser@vm-reds-2015s2:~/seee_student$ cd 7seg_u-boot/
+    
+    redsuser@vm-reds-2015s2:~/seee_student/7seg_u-boot$ make
+    arm-linux-gnueabihf-gcc -g  -O0  -fno-common -ffixed-r8 -msoft-float  -D__KERNEL__ -DCONFIG_SYS_TEXT_BASE=0x80008000 -Iinclude -fno-builtin -ffreestanding -nostdinc -isystem /opt/linaro-arm-linux-gnueabihf/bin/../lib/gcc/arm-linux-gnueabihf/4.7.3/include -pipe  -DCONFIG_ARM -D__ARM__ -marm  -mabi=aapcs-linux -mno-thumb-interwork -march=armv5 -Wall -Wstrict-prototypes -c -o stubs.o stubs.c
+    arm-linux-gnueabihf-gcc -g  -O0  -fno-common -ffixed-r8 -msoft-float  -D__KERNEL__ -DCONFIG_SYS_TEXT_BASE=0x80008000 -Iinclude -fno-builtin -ffreestanding -nostdinc -isystem /opt/linaro-arm-linux-gnueabihf/bin/../lib/gcc/arm-linux-gnueabihf/4.7.3/include -pipe  -DCONFIG_ARM -D__ARM__ -marm  -mabi=aapcs-linux -mno-thumb-interwork -march=armv5 -Wall -Wstrict-prototypes -c -o 7seg.o 7seg.c
+    arm-linux-gnueabihf-gcc -g  -O0  -fno-common -ffixed-r8 -msoft-float  -D__KERNEL__ -DCONFIG_SYS_TEXT_BASE=0x80008000 -Iinclude -fno-builtin -ffreestanding -nostdinc -isystem /opt/linaro-arm-linux-gnueabihf/bin/../lib/gcc/arm-linux-gnueabihf/4.7.3/include -pipe  -DCONFIG_ARM -D__ARM__ -marm  -mabi=aapcs-linux -mno-thumb-interwork -march=armv5 -Wall -Wstrict-prototypes -c -o board.o board.c
+    arm-linux-gnueabihf-ar crv libstubs.a stubs.o 7seg.o board.o
+    a - stubs.o
+    a - 7seg.o
+    a - board.o
+    arm-linux-gnueabihf-gcc -g  -O0  -fno-common -ffixed-r8 -msoft-float  -D__KERNEL__ -DCONFIG_SYS_TEXT_BASE=0x80008000 -Iinclude -fno-builtin -ffreestanding -nostdinc -isystem /opt/linaro-arm-linux-gnueabihf/bin/../lib/gcc/arm-linux-gnueabihf/4.7.3/include -pipe  -DCONFIG_ARM -D__ARM__ -marm  -mabi=aapcs-linux -mno-thumb-interwork -march=armv5 -Wall -Wstrict-prototypes -c -o 7seg_u-boot.o 7seg_u-boot.c
+    arm-linux-gnueabihf-ld -g  -Ttext 0x81600000 \
+    			-o 7seg_u-boot 7seg_u-boot.o stubs.o 7seg.o board.o \
+    			-L/opt/linaro-arm-linux-gnueabihf/bin/../lib/gcc/arm-linux-gnueabihf/4.7.3 -lgcc
+    arm-linux-gnueabihf-ld: warning: cannot find entry symbol _start; defaulting to 81600000
+    arm-linux-gnueabihf-objcopy -O binary 7seg_u-boot 7seg_u-boot.bin 2>/dev/null
+    
+    redsuser@vm-reds-2015s2:~/seee_student/7seg_u-boot$ cp 7seg_u-boot ../../tftpboot
+    redsuser@vm-reds-2015s2:~/seee_student/7seg_u-boot$ cd ..
+    redsuser@vm-reds-2015s2:~/seee_student$ ./stq
+
+
+We can then run it from U-Boot::
+
+    Reptar # tftp 7seg_u-boot/7seg_u-boot.bin
+    smc911x: detected LAN9118 controller
+    smc911x: phy initialized
+    smc911x: MAC e4:af:a1:40:01:fe
+    Using smc911x-0 device
+    TFTP from server 10.0.2.2; our IP address is 10.0.2.10
+    Filename '7seg_u-boot/7seg_u-boot.bin'.
+    Load address: 0x81600000
+    Loading: #######
+    done
+    Bytes transferred = 34932 (8874 hex)
+    Reptar # go 0x81600000
+
+We can then observe the number on the 3 seven segment display changing in the frond-end !
+
+7) Mini-application
+-------------------
