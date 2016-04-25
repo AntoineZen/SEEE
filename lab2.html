@@ -82,7 +82,7 @@
             
                 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="lab1.html">REPTAR Introduction</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="">Periferal Emulations</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Periferal Emulations</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#qemu-environment-and-repatar-machine">1) QEMU environment and repatar machine</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#spartan-6-fpga-emulation">2) Spartan 6 FPGA Emulation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#led-devices-emulation">3) LED devices emulation</a></li>
@@ -114,7 +114,7 @@
         <div class="rst-content">
           
 
-
+ 
 
 
 
@@ -142,7 +142,7 @@
 <div class="section" id="qemu-environment-and-repatar-machine">
 <h2>1) QEMU environment and repatar machine<a class="headerlink" href="#qemu-environment-and-repatar-machine" title="Permalink to this headline">¶</a></h2>
 <p>This part is an handover of the QEMU envionment provided for the lab. First part try to run the <em>qtemu</em> witch is the frontend to the QEMU and reptar emulation. To start <em>QEMU</em> and the <em>qtemu</em> togeter, we can can run the <code class="docutils literal"><span class="pre">stq</span></code> script:</p>
-<div class="highlight-python"><div class="highlight"><pre>redsuser@vm-reds-2015s2:~/seee_student$ ./stq
+<div class="highlight-default"><div class="highlight"><pre><span></span>redsuser@vm-reds-2015s2:~/seee_student$ ./stq
 libGL error: pci id for fd 12: 80ee:beef, driver (null)
 libGL error: core dri or dri2 extension not found
 libGL error: failed to load driver: vboxvideo
@@ -200,7 +200,7 @@ Reptar #
 </div></blockquote>
 <p>The QEMU windows (black container) represents the Reptar LCD screen. On the right, the frontend that represent the Reptar hardware. We can see that we have U-Boot prompt ready in the terminal window.</p>
 <p>We can re-compile by hand the QUEM:</p>
-<div class="highlight-python"><div class="highlight"><pre>redsuser@vm-reds-2015s2:~/seee_student$ cd qemu-reds/
+<div class="highlight-default"><div class="highlight"><pre><span></span>redsuser@vm-reds-2015s2:~/seee_student$ cd qemu-reds/
 redsuser@vm-reds-2015s2:~/seee_student/qemu-reds$ ./configure --target-list=arm-softmmu --enable-debug --disable-attr --disable-docs; make -j 3
 
 redsuser@vm-reds-2015s2:~/seee_student/qemu-reds$ make
@@ -224,11 +224,11 @@ make[1]: Leaving directory `/home/redsuser/seee_student/qemu-reds&#39;
 </ol>
 </div></blockquote>
 <p>The declaration of the periferal is the following:</p>
-<div class="highlight-c"><div class="highlight"><pre><span class="c1">// Declare the Spartan 6 periferal</span>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="c1">// Declare the Spartan 6 periferal</span>
 <span class="k">static</span> <span class="k">const</span> <span class="n">TypeInfo</span> <span class="n">reptar_sp6_info</span> <span class="o">=</span> <span class="p">{</span>
             <span class="p">.</span><span class="n">name</span> <span class="o">=</span> <span class="s">&quot;reptar_sp6&quot;</span><span class="p">,</span>                                   <span class="c1">// Name use for reference/creation</span>
             <span class="p">.</span><span class="n">parent</span> <span class="o">=</span> <span class="n">TYPE_SYS_BUS_DEVICE</span><span class="p">,</span>                  <span class="c1">// This device belong to the SYS BUS</span>
-            <span class="p">.</span><span class="n">instance_size</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">sp6_state_t</span><span class="p">),</span>   <span class="c1">// Declare the memory needed (for dynamic alocation ?)</span>
+            <span class="p">.</span><span class="n">instance_size</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">sp6_state_t</span><span class="p">),</span>   <span class="c1">// Declare the memory needed (for dynamic alocation ?)</span>
             <span class="p">.</span><span class="n">instance_init</span> <span class="o">=</span> <span class="n">sp6_init</span><span class="p">,</span>                              <span class="c1">// Declare instance intialization callback (instance constructor)</span>
             <span class="p">.</span><span class="n">class_init</span> <span class="o">=</span> <span class="n">sp6_class_init</span><span class="p">,</span>                   <span class="c1">// Declare class(static) initialization callback (class constructor)</span>
 <span class="p">};</span>
@@ -245,7 +245,7 @@ make[1]: Leaving directory `/home/redsuser/seee_student/qemu-reds&#39;
 </pre></div>
 </div>
 <p>The <code class="docutils literal"><span class="pre">reptar_sp6_info</span></code> structure names the periferal. This name will be used in the Reptar initialization function to intialize the periferal:</p>
-<div class="highlight-c"><div class="highlight"><pre><span class="k">static</span> <span class="kt">void</span> <span class="nf">reptar_init</span><span class="p">(</span><span class="n">MachineState</span> <span class="o">*</span><span class="n">machine</span><span class="p">)</span>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="k">static</span> <span class="kt">void</span> <span class="nf">reptar_init</span><span class="p">(</span><span class="n">MachineState</span> <span class="o">*</span><span class="n">machine</span><span class="p">)</span>
 <span class="p">{</span>
 
     <span class="p">...</span>
@@ -257,7 +257,7 @@ make[1]: Leaving directory `/home/redsuser/seee_student/qemu-reds&#39;
 <p>The above code adds the Spartan 6 periferal of type <em>&#8220;reptar_sp6&#8221;</em> to the system bus at base address <strong>0x18000000</strong>.</p>
 <p>The <code class="docutils literal"><span class="pre">reptar_sp6_info</span></code> structure also poins to two functions, <code class="docutils literal"><span class="pre">sp6_init()</span></code> and <code class="docutils literal"><span class="pre">sp6_class_init()</span></code>.</p>
 <p>The <code class="docutils literal"><span class="pre">sp6_init()</span></code> is the instance initialization function. For now, we keep it empty:</p>
-<div class="highlight-c"><div class="highlight"><pre><span class="k">static</span> <span class="kt">void</span> <span class="nf">sp6_init</span><span class="p">(</span><span class="n">Object</span> <span class="o">*</span><span class="n">obj</span><span class="p">)</span>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="k">static</span> <span class="kt">void</span> <span class="nf">sp6_init</span><span class="p">(</span><span class="n">Object</span> <span class="o">*</span><span class="n">obj</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="n">printf</span><span class="p">(</span><span class="s">&quot;sp6_init()</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
 
@@ -265,7 +265,7 @@ make[1]: Leaving directory `/home/redsuser/seee_student/qemu-reds&#39;
 </pre></div>
 </div>
 <p>The <code class="docutils literal"><span class="pre">sp6_class_init()</span></code> is the class initialization function. All it does is to reference another callback function, <code class="docutils literal"><span class="pre">sp6_initfn()</span></code> that will be called when the class is first referenced:</p>
-<div class="highlight-c"><div class="highlight"><pre><span class="k">static</span> <span class="kt">void</span> <span class="nf">sp6_class_init</span><span class="p">(</span><span class="n">ObjectClass</span><span class="o">*</span> <span class="n">this</span><span class="p">,</span> <span class="kt">void</span><span class="o">*</span> <span class="n">data</span><span class="p">)</span>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="k">static</span> <span class="kt">void</span> <span class="nf">sp6_class_init</span><span class="p">(</span><span class="n">ObjectClass</span><span class="o">*</span> <span class="n">this</span><span class="p">,</span> <span class="kt">void</span><span class="o">*</span> <span class="n">data</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="n">SysBusDeviceClass</span><span class="o">*</span> <span class="n">k</span> <span class="o">=</span> <span class="n">SYS_BUS_DEVICE_CLASS</span><span class="p">(</span><span class="n">this</span><span class="p">);</span>
     <span class="n">printf</span><span class="p">(</span><span class="s">&quot;sp6_class_init()</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
@@ -276,7 +276,7 @@ make[1]: Leaving directory `/home/redsuser/seee_student/qemu-reds&#39;
 </div>
 <p>To be clear, the <code class="docutils literal"><span class="pre">sp6_class_init()`</span> <span class="pre">function</span> <span class="pre">will</span> <span class="pre">be</span> <span class="pre">called</span> <span class="pre">at</span> <span class="pre">the</span> <span class="pre">QEMU</span> <span class="pre">startup.</span>&nbsp; <span class="pre">``sp6_init()</span></code> and <code class="docutils literal"><span class="pre">sp6_initfn()</span></code> will be called when adding the periferal to the system bus after the <code class="docutils literal"><span class="pre">sysbus_create_simple()</span></code> call.</p>
 <p>The <code class="docutils literal"><span class="pre">sp6_initfn()</span></code> will initialze the communiction with the front-end, intialize the memory region and the callbacks and map the memory region to the device:</p>
-<div class="highlight-c"><div class="highlight"><pre><span class="k">static</span> <span class="kt">int</span> <span class="nf">sp6_initfn</span><span class="p">(</span><span class="n">SysBusDevice</span> <span class="o">*</span><span class="n">dev</span><span class="p">)</span>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="k">static</span> <span class="kt">int</span> <span class="nf">sp6_initfn</span><span class="p">(</span><span class="n">SysBusDevice</span> <span class="o">*</span><span class="n">dev</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="n">printf</span><span class="p">(</span><span class="s">&quot;sp6_initfn()</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
     <span class="c1">// Initialze the comunication with the graphics front-end</span>
@@ -292,7 +292,7 @@ make[1]: Leaving directory `/home/redsuser/seee_student/qemu-reds&#39;
 </pre></div>
 </div>
 <p>The <code class="docutils literal"><span class="pre">memory_region_init_io()</span></code> reference the <code class="docutils literal"><span class="pre">sp6_ops</span></code> structure. This is a global static structure containing the pointer to the read &amp; write callbacks (It also define device endianness):</p>
-<div class="highlight-c"><div class="highlight"><pre><span class="c1">// Declare read &amp; write call-back for the Spartan6 Register address</span>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="c1">// Declare read &amp; write call-back for the Spartan6 Register address</span>
 <span class="k">static</span> <span class="k">const</span> <span class="n">MemoryRegionOps</span> <span class="n">sp6_ops</span> <span class="o">=</span> <span class="p">{</span>
     <span class="p">.</span><span class="n">read</span> <span class="o">=</span> <span class="n">sp6_read</span><span class="p">,</span>
     <span class="p">.</span><span class="n">write</span> <span class="o">=</span> <span class="n">sp6_write</span><span class="p">,</span>
@@ -301,7 +301,7 @@ make[1]: Leaving directory `/home/redsuser/seee_student/qemu-reds&#39;
 </pre></div>
 </div>
 <p>The read &amp; write callback functions should be written, so they can be referenced by the above structure. For now, they just print that they are called so we can test our empty periferal:</p>
-<div class="highlight-c"><div class="highlight"><pre><span class="k">static</span> <span class="kt">uint64_t</span> <span class="nf">sp6_read</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">opaque</span><span class="p">,</span> <span class="n">hwaddr</span> <span class="n">addr</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="n">size</span><span class="p">)</span>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="k">static</span> <span class="kt">uint64_t</span> <span class="nf">sp6_read</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">opaque</span><span class="p">,</span> <span class="n">hwaddr</span> <span class="n">addr</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="n">size</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="n">printf</span><span class="p">(</span><span class="s">&quot;sp6_read(%x, %x, %x)</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">opaque</span><span class="p">,</span> <span class="p">(</span><span class="kt">uint64_t</span><span class="p">)</span><span class="n">addr</span><span class="p">,</span> <span class="n">size</span><span class="p">);</span>
     <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
@@ -314,36 +314,36 @@ make[1]: Leaving directory `/home/redsuser/seee_student/qemu-reds&#39;
 </pre></div>
 </div>
 <p>We can re-comile QEMU and run it. We can see during the startup that the defined callback function are called before entering U-Boot:</p>
-<div class="highlight-python"><div class="highlight"><pre>Reptar # redsuser@vm-reds-2015s2:~/seee_student$ ./stq
-libGL error: pci id for fd 12: 80ee:beef, driver (null)
-libGL error: core dri or dri2 extension not found
-libGL error: failed to load driver: vboxvideo
-Running QEMU
-sp6_class_init()
-WARNING: Image format was not specified for &#39;filesystem/flash&#39; and probing guessed raw.
-         Automatically detecting the format is dangerous for raw images, write operations on block 0 will be restricted.
-         Specify the &#39;raw&#39; format explicitly to remove the restrictions.
-WARNING: Image format was not specified for &#39;filesystem/sd-card.img&#39; and probing guessed raw.
-         Automatically detecting the format is dangerous for raw images, write operations on block 0 will be restricted.
-         Specify the &#39;raw&#39; format explicitly to remove the restrictions.
-sysbus_create_simple()
-sp6_initfn()
-reptar-sp6-emul: sp6_emul_init
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Reptar</span> <span class="c1"># redsuser@vm-reds-2015s2:~/seee_student$ ./stq</span>
+<span class="n">libGL</span> <span class="n">error</span><span class="p">:</span> <span class="n">pci</span> <span class="nb">id</span> <span class="k">for</span> <span class="n">fd</span> <span class="mi">12</span><span class="p">:</span> <span class="mi">80</span><span class="n">ee</span><span class="p">:</span><span class="n">beef</span><span class="p">,</span> <span class="n">driver</span> <span class="p">(</span><span class="n">null</span><span class="p">)</span>
+<span class="n">libGL</span> <span class="n">error</span><span class="p">:</span> <span class="n">core</span> <span class="n">dri</span> <span class="ow">or</span> <span class="n">dri2</span> <span class="n">extension</span> <span class="ow">not</span> <span class="n">found</span>
+<span class="n">libGL</span> <span class="n">error</span><span class="p">:</span> <span class="n">failed</span> <span class="n">to</span> <span class="n">load</span> <span class="n">driver</span><span class="p">:</span> <span class="n">vboxvideo</span>
+<span class="n">Running</span> <span class="n">QEMU</span>
+<span class="n">sp6_class_init</span><span class="p">()</span>
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">Image</span> <span class="nb">format</span> <span class="n">was</span> <span class="ow">not</span> <span class="n">specified</span> <span class="k">for</span> <span class="s1">&#39;filesystem/flash&#39;</span> <span class="ow">and</span> <span class="n">probing</span> <span class="n">guessed</span> <span class="n">raw</span><span class="o">.</span>
+         <span class="n">Automatically</span> <span class="n">detecting</span> <span class="n">the</span> <span class="nb">format</span> <span class="ow">is</span> <span class="n">dangerous</span> <span class="k">for</span> <span class="n">raw</span> <span class="n">images</span><span class="p">,</span> <span class="n">write</span> <span class="n">operations</span> <span class="n">on</span> <span class="n">block</span> <span class="mi">0</span> <span class="n">will</span> <span class="n">be</span> <span class="n">restricted</span><span class="o">.</span>
+         <span class="n">Specify</span> <span class="n">the</span> <span class="s1">&#39;raw&#39;</span> <span class="nb">format</span> <span class="n">explicitly</span> <span class="n">to</span> <span class="n">remove</span> <span class="n">the</span> <span class="n">restrictions</span><span class="o">.</span>
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">Image</span> <span class="nb">format</span> <span class="n">was</span> <span class="ow">not</span> <span class="n">specified</span> <span class="k">for</span> <span class="s1">&#39;filesystem/sd-card.img&#39;</span> <span class="ow">and</span> <span class="n">probing</span> <span class="n">guessed</span> <span class="n">raw</span><span class="o">.</span>
+         <span class="n">Automatically</span> <span class="n">detecting</span> <span class="n">the</span> <span class="nb">format</span> <span class="ow">is</span> <span class="n">dangerous</span> <span class="k">for</span> <span class="n">raw</span> <span class="n">images</span><span class="p">,</span> <span class="n">write</span> <span class="n">operations</span> <span class="n">on</span> <span class="n">block</span> <span class="mi">0</span> <span class="n">will</span> <span class="n">be</span> <span class="n">restricted</span><span class="o">.</span>
+         <span class="n">Specify</span> <span class="n">the</span> <span class="s1">&#39;raw&#39;</span> <span class="nb">format</span> <span class="n">explicitly</span> <span class="n">to</span> <span class="n">remove</span> <span class="n">the</span> <span class="n">restrictions</span><span class="o">.</span>
+<span class="n">sysbus_create_simple</span><span class="p">()</span>
+<span class="n">sp6_initfn</span><span class="p">()</span>
+<span class="n">reptar</span><span class="o">-</span><span class="n">sp6</span><span class="o">-</span><span class="n">emul</span><span class="p">:</span> <span class="n">sp6_emul_init</span>
 
 
-U-Boot 2011.09-00000-g9af6a15 (Feb 10 2015 - 16:10:59)
+<span class="n">U</span><span class="o">-</span><span class="n">Boot</span> <span class="mf">2011.09</span><span class="o">-</span><span class="mi">00000</span><span class="o">-</span><span class="n">g9af6a15</span> <span class="p">(</span><span class="n">Feb</span> <span class="mi">10</span> <span class="mi">2015</span> <span class="o">-</span> <span class="mi">16</span><span class="p">:</span><span class="mi">10</span><span class="p">:</span><span class="mi">59</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>We can test the read &amp; write callback using the <code class="docutils literal"><span class="pre">md.w</span></code> and <code class="docutils literal"><span class="pre">mw.w</span></code> utility from UBoot. Those function repectively read and write a 32 bit word from the memory.</p>
 <p>Test Read of read at 0x18000000</p>
-<div class="highlight-python"><div class="highlight"><pre>Reptar # md.w 0x18000000 1
-18000000:sp6_read(881920, 0, 2)
- 0000    ..
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Reptar</span> <span class="c1"># md.w 0x18000000 1</span>
+<span class="mi">18000000</span><span class="p">:</span><span class="n">sp6_read</span><span class="p">(</span><span class="mi">881920</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+ <span class="mi">0000</span>    <span class="o">..</span>
 </pre></div>
 </div>
 <p>We see the output of the <code class="docutils literal"><span class="pre">printf()</span></code> stament implemented in the <code class="docutils literal"><span class="pre">sp6_read()</span></code> callback.</p>
 <p>Test Write of value &#8220;35&#8221; at address 0x18000000:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">Reptar</span> <span class="c"># mw.w 0x18000000 35</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Reptar</span> <span class="c1"># mw.w 0x18000000 35</span>
 <span class="n">sp6_write</span><span class="p">(</span><span class="mi">881920</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">35</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -353,7 +353,7 @@ U-Boot 2011.09-00000-g9af6a15 (Feb 10 2015 - 16:10:59)
 <h2>3) LED devices emulation<a class="headerlink" href="#led-devices-emulation" title="Permalink to this headline">¶</a></h2>
 <p>Once the Spartan 6 periferal is created and reachable from the emulated CPU, we need to implement the periferal behavior. The first part will be the LED output. The LEDS are driven by a single register. Each bit represent a LED. The offset for this register is <strong>0x003a</strong>.</p>
 <p>To emulate the registers, we create a data structre as following:</p>
-<div class="highlight-c"><div class="highlight"><pre><span class="k">typedef</span> <span class="k">struct</span>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="k">typedef</span> <span class="k">struct</span>
 <span class="p">{</span>
     <span class="c1">// Register address</span>
     <span class="kt">uint32_t</span> <span class="n">addr</span><span class="p">;</span>
@@ -366,7 +366,7 @@ U-Boot 2011.09-00000-g9af6a15 (Feb 10 2015 - 16:10:59)
 </pre></div>
 </div>
 <p>This structure contains the address of the register, its address, and a pointer to callback function that will be used to do some action when the register is written. This structure is then used to construct the register map as a static array of those structure:</p>
-<div class="highlight-c"><div class="highlight"><pre><span class="cp">#define LED_REG     0x003A</span>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="cp">#define LED_REG     0x003A</span>
 <span class="cp">#define GUARD_REG 0xFFFFFFFF</span>
 
 <span class="k">static</span> <span class="n">fake_reg</span> <span class="n">sp6_reg_state</span><span class="p">[]</span> <span class="o">=</span>
@@ -378,7 +378,7 @@ U-Boot 2011.09-00000-g9af6a15 (Feb 10 2015 - 16:10:59)
 </pre></div>
 </div>
 <p>The <code class="docutils literal"><span class="pre">GUARD_RED</span></code> will be used to break the loop when the last element is reached. We can modify the <code class="docutils literal"><span class="pre">sp6_read()</span></code> so that the value of the register value is return when reading it:</p>
-<div class="highlight-c"><div class="highlight"><pre><span class="k">static</span> <span class="kt">uint64_t</span> <span class="nf">sp6_read</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">opaque</span><span class="p">,</span> <span class="n">hwaddr</span> <span class="n">addr</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="n">size</span><span class="p">)</span>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="k">static</span> <span class="kt">uint64_t</span> <span class="nf">sp6_read</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">opaque</span><span class="p">,</span> <span class="n">hwaddr</span> <span class="n">addr</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="n">size</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="n">fake_reg</span><span class="o">*</span> <span class="n">reg</span> <span class="o">=</span> <span class="p">(</span><span class="n">fake_reg</span><span class="o">*</span><span class="p">)</span><span class="n">opaque</span><span class="p">;</span>
     <span class="n">printf</span><span class="p">(</span><span class="s">&quot;sp6_read(%x, %x, %x)</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">opaque</span><span class="p">,</span> <span class="p">(</span><span class="kt">uint64_t</span><span class="p">)</span><span class="n">addr</span><span class="p">,</span> <span class="n">size</span><span class="p">);</span>
@@ -399,7 +399,7 @@ U-Boot 2011.09-00000-g9af6a15 (Feb 10 2015 - 16:10:59)
 </pre></div>
 </div>
 <p>The <code class="docutils literal"><span class="pre">sp6_write()</span></code> function is modified in a similar way. In addition, it call the callback function if its defined:</p>
-<div class="highlight-c"><div class="highlight"><pre><span class="k">static</span> <span class="kt">void</span> <span class="nf">sp6_write</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">opaque</span><span class="p">,</span>  <span class="n">hwaddr</span> <span class="n">addr</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">data</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="n">size</span><span class="p">)</span>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="k">static</span> <span class="kt">void</span> <span class="nf">sp6_write</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">opaque</span><span class="p">,</span>  <span class="n">hwaddr</span> <span class="n">addr</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">data</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="n">size</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="n">printf</span><span class="p">(</span><span class="s">&quot;sp6_write(%x, %x, %x, %x)</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">opaque</span><span class="p">,</span> <span class="p">(</span><span class="kt">uint64_t</span><span class="p">)</span><span class="n">addr</span><span class="p">,</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">data</span><span class="p">,</span> <span class="n">size</span><span class="p">);</span>
 
@@ -431,7 +431,7 @@ U-Boot 2011.09-00000-g9af6a15 (Feb 10 2015 - 16:10:59)
 </pre></div>
 </div>
 <p>Then we need to implement the callback for the LED register. This function simply pass the value to the fontend:</p>
-<div class="highlight-c"><div class="highlight"><pre><span class="kt">void</span> <span class="nf">leds_write</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">value</span><span class="p">)</span>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="kt">void</span> <span class="nf">leds_write</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">value</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Led write&quot;</span><span class="p">);</span>
 
@@ -446,11 +446,11 @@ U-Boot 2011.09-00000-g9af6a15 (Feb 10 2015 - 16:10:59)
 </pre></div>
 </div>
 <p>We can then test by writing any value to the address 0x1800003A from the U-Boot prompt (again using the <code class="docutils literal"><span class="pre">mw.b</span></code> command:</p>
-<div class="highlight-python"><div class="highlight"><pre>Reptar # mw.b 0x1800003A 0xAA
-sp6_write(e5a85920, 3a, aa, 1)
-Led writereptar-sp6-emul: sp6_emul_cmd_post
-reptar-sp6-emul: sp6_emul_cmd_post Inserting into queue...
-reptar-sp6-emul: sp6_emul_cmd_post ...done
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Reptar</span> <span class="c1"># mw.b 0x1800003A 0xAA</span>
+<span class="n">sp6_write</span><span class="p">(</span><span class="n">e5a85920</span><span class="p">,</span> <span class="mi">3</span><span class="n">a</span><span class="p">,</span> <span class="n">aa</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">Led</span> <span class="n">writereptar</span><span class="o">-</span><span class="n">sp6</span><span class="o">-</span><span class="n">emul</span><span class="p">:</span> <span class="n">sp6_emul_cmd_post</span>
+<span class="n">reptar</span><span class="o">-</span><span class="n">sp6</span><span class="o">-</span><span class="n">emul</span><span class="p">:</span> <span class="n">sp6_emul_cmd_post</span> <span class="n">Inserting</span> <span class="n">into</span> <span class="n">queue</span><span class="o">...</span>
+<span class="n">reptar</span><span class="o">-</span><span class="n">sp6</span><span class="o">-</span><span class="n">emul</span><span class="p">:</span> <span class="n">sp6_emul_cmd_post</span> <span class="o">...</span><span class="n">done</span>
 </pre></div>
 </div>
 <p>The front end then shows the patern 0xAA on the LEDs:</p>
@@ -462,7 +462,7 @@ reptar-sp6-emul: sp6_emul_cmd_post ...done
 <h2>4) Button emulation<a class="headerlink" href="#button-emulation" title="Permalink to this headline">¶</a></h2>
 <p>In this part, we are required to make the button availabe to the software. For this, a call back will modify the register values. This callback is already provided in the file <code class="docutils literal"><span class="pre">reptar_sp6_button.c</span></code> and is called <code class="docutils literal"><span class="pre">reptar_sp6_btns_event_process()</span></code>.</p>
 <p>We will need to make the register acessible to functions in <code class="docutils literal"><span class="pre">reptar_sp6_button.c</span></code>. For this we modified the structre provided in <code class="docutils literal"><span class="pre">repstar_sp6.h</span></code> to add it the register strucure:</p>
-<div class="highlight-c"><div class="highlight"><pre><span class="cm">/**</span>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="cm">/**</span>
 <span class="cm"> * Desrcrite an hardware register.</span>
 <span class="cm"> */</span>
 <span class="k">typedef</span> <span class="k">struct</span>
@@ -485,11 +485,11 @@ reptar-sp6-emul: sp6_emul_cmd_post ...done
     <span class="n">qemu_irq</span> <span class="n">irq</span><span class="p">;</span>
     <span class="kt">int</span> <span class="n">irq_pending</span><span class="p">;</span>
     <span class="kt">int</span> <span class="n">irq_enabled</span><span class="p">;</span>
-<span class="p">}</span> <span class="kt">sp6_state_t</span><span class="p">;</span>
+<span class="p">}</span> <span class="n">sp6_state_t</span><span class="p">;</span>
 </pre></div>
 </div>
 <p>We need then to intialize a such structure in <code class="docutils literal"><span class="pre">reptar_sp6.c</span></code>:</p>
-<div class="highlight-c"><div class="highlight"><pre><span class="k">static</span> <span class="n">fake_reg</span> <span class="n">sp6_reg_state</span><span class="p">[]</span> <span class="o">=</span>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="k">static</span> <span class="n">fake_reg</span> <span class="n">sp6_reg_state</span><span class="p">[]</span> <span class="o">=</span>
 <span class="p">{</span>
             <span class="c1">// {addr, value, write_callback}</span>
             <span class="p">{</span><span class="n">PUSH_BUT_REG</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">},</span>
@@ -497,17 +497,17 @@ reptar-sp6-emul: sp6_emul_cmd_post ...done
             <span class="p">{</span><span class="n">GUARD_REG</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">},</span>
 <span class="p">};</span>
 
-<span class="k">static</span> <span class="kt">sp6_state_t</span> <span class="n">sp6_state</span> <span class="o">=</span> <span class="p">{.</span><span class="n">regs</span><span class="o">=</span><span class="n">sp6_reg_state</span><span class="p">};</span>
+<span class="k">static</span> <span class="n">sp6_state_t</span> <span class="n">sp6_state</span> <span class="o">=</span> <span class="p">{.</span><span class="n">regs</span><span class="o">=</span><span class="n">sp6_reg_state</span><span class="p">};</span>
 </pre></div>
 </div>
 <p><strong>Note that we added one register for the push button.</strong></p>
 <p>In the <code class="docutils literal"><span class="pre">p6_init_fn()</span></code> we need to tell the button handler module <code class="docutils literal"><span class="pre">reptar_sp6_buttons.c</span></code> where to find this structure:</p>
-<div class="highlight-c"><div class="highlight"><pre><span class="c1">// Tell the button driver where to find the device state.</span>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="c1">// Tell the button driver where to find the device state.</span>
 <span class="n">reptar_sp6_btns_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">sp6_state</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>We can add some code in the <code class="docutils literal"><span class="pre">reptar_sp6_btns_event_process()</span></code> callback to modifiy the register value when a button is pressed:</p>
-<div class="highlight-c"><div class="highlight"><pre><span class="kt">int</span> <span class="nf">reptar_sp6_btns_event_process</span><span class="p">(</span><span class="n">cJSON</span> <span class="o">*</span> <span class="n">object</span><span class="p">)</span>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="kt">int</span> <span class="nf">reptar_sp6_btns_event_process</span><span class="p">(</span><span class="n">cJSON</span> <span class="o">*</span> <span class="n">object</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="c1">//printf(&quot;reptar_sp6_btns_event_process()\n&quot;);</span>
     <span class="kt">char</span><span class="o">*</span> <span class="n">perif_name</span> <span class="o">=</span> <span class="n">cJSON_GetObjectItem</span><span class="p">(</span><span class="n">object</span><span class="p">,</span> <span class="s">&quot;perid&quot;</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">valuestring</span><span class="p">;</span>
@@ -532,7 +532,7 @@ reptar-sp6-emul: sp6_emul_cmd_post ...done
 </pre></div>
 </div>
 <p>A small program is available to test the button functionality. We can compile it and make it avaialbe to the emulator and U-Boot using TFTP:</p>
-<div class="highlight-console"><div class="highlight"><pre><span class="gp">redsuser@vm-reds-2015s2:~/seee_student$</span> <span class="nb">cd </span>sp6_buttons_u-boot/
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">redsuser@vm-reds-2015s2:~/seee_student$</span> <span class="nb">cd</span> sp6_buttons_u-boot/
 <span class="gp">redsuser@vm-reds-2015s2:~/seee_student/sp6_buttons_u-boot$</span> make
 <span class="go">arm-linux-gnueabihf-gcc -g  -O0  -fno-common -ffixed-r8 -msoft-float  -D__KERNEL__ -DCONFIG_SYS_TEXT_BASE=0x80008000 -Iinclude -fno-builtin -ffreestanding -nostdinc -isystem /opt/linaro-arm-linux-gnueabihf/bin/../lib/gcc/arm-linux-gnueabihf/4.7.3/include -pipe  -DCONFIG_ARM -D__ARM__ -marm  -mabi=aapcs-linux -mno-thumb-interwork -march=armv5 -Wall -Wstrict-prototypes -c -o stubs.o stubs.c</span>
 <span class="go">arm-linux-gnueabihf-gcc -g  -O0  -fno-common -ffixed-r8 -msoft-float  -D__KERNEL__ -DCONFIG_SYS_TEXT_BASE=0x80008000 -Iinclude -fno-builtin -ffreestanding -nostdinc -isystem /opt/linaro-arm-linux-gnueabihf/bin/../lib/gcc/arm-linux-gnueabihf/4.7.3/include -pipe  -DCONFIG_ARM -D__ARM__ -marm  -mabi=aapcs-linux -mno-thumb-interwork -march=armv5 -Wall -Wstrict-prototypes -c -o board.o board.c</span>
@@ -550,7 +550,7 @@ reptar-sp6-emul: sp6_emul_cmd_post ...done
 </pre></div>
 </div>
 <p>We can then run it from the emulator:</p>
-<div class="highlight-console"><div class="highlight"><pre><span class="go">Reptar # run tftp3</span>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">Reptar # run tftp3</span>
 <span class="go">smc911x: detected LAN9118 controller</span>
 <span class="go">smc911x: phy initialized</span>
 <span class="go">smc911x: MAC e4:af:a1:40:01:fe</span>
@@ -562,7 +562,7 @@ reptar-sp6-emul: sp6_emul_cmd_post ...done
 <span class="go">done</span>
 <span class="go">Bytes transferred = 34512 (86d0 hex)</span>
 <span class="go">Reptar # go 0x81600000</span>
-<span class="gp">#</span><span class="c"># Starting application at 0x81600000 ...</span>
+<span class="gp">#</span><span class="c1"># Starting application at 0x81600000 ...</span>
 <span class="go">Start of the SP6 buttons standalone test application</span>
 <span class="go">...</span>
 <span class="go">Button LEFT pressed</span>
@@ -581,7 +581,7 @@ reptar-sp6-emul: sp6_emul_cmd_post ...done
 <div class="section" id="irq-managment-with-buttons">
 <h2>5) IRQ managment with buttons<a class="headerlink" href="#irq-managment-with-buttons" title="Permalink to this headline">¶</a></h2>
 <p>We will add the IRQ managment to the buttons. For this we need to tell the QUEM that our device have the ablitiy to make IRQ and request an IRQ number. For this we should add the following call to <code class="docutils literal"><span class="pre">sp6_initfn()</span></code>:</p>
-<div class="highlight-c"><div class="highlight"><pre><span class="k">static</span> <span class="kt">int</span> <span class="nf">sp6_initfn</span><span class="p">(</span><span class="n">SysBusDevice</span> <span class="o">*</span><span class="n">dev</span><span class="p">)</span>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="k">static</span> <span class="kt">int</span> <span class="nf">sp6_initfn</span><span class="p">(</span><span class="n">SysBusDevice</span> <span class="o">*</span><span class="n">dev</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="c1">//... (Extra code removed)</span>
 
@@ -593,7 +593,7 @@ reptar-sp6-emul: sp6_emul_cmd_post ...done
 </pre></div>
 </div>
 <p>Then we need to map the IRQ to the system bus (witch goes to the CPU) in the platfrom initialization function <code class="docutils literal"><span class="pre">reptar_init()</span></code>:</p>
-<div class="highlight-c"><div class="highlight"><pre><span class="k">static</span> <span class="kt">void</span> <span class="nf">reptar_init</span><span class="p">(</span><span class="n">MachineState</span> <span class="o">*</span><span class="n">machine</span><span class="p">)</span>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="k">static</span> <span class="kt">void</span> <span class="nf">reptar_init</span><span class="p">(</span><span class="n">MachineState</span> <span class="o">*</span><span class="n">machine</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="c1">//... (extra code removed</span>
     <span class="n">s</span><span class="o">-&gt;</span><span class="n">sp6</span> <span class="o">=</span> <span class="n">sysbus_create_simple</span><span class="p">(</span><span class="s">&quot;reptar_sp6&quot;</span><span class="p">,</span> <span class="mh">0x18000000</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
@@ -603,7 +603,7 @@ reptar-sp6-emul: sp6_emul_cmd_post ...done
 </pre></div>
 </div>
 <p>We then need a new register for the IRQ control register of the FPGA. This register is at 0x0018. This register is writtabe so, it will get a write call back:</p>
-<div class="highlight-c"><div class="highlight"><pre><span class="k">static</span> <span class="kt">void</span> <span class="nf">irq_ctl_reg_write</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">value</span><span class="p">)</span>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="k">static</span> <span class="kt">void</span> <span class="nf">irq_ctl_reg_write</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">value</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="c1">// Manage IRQ Clear</span>
     <span class="k">if</span> <span class="p">(</span><span class="n">value</span> <span class="o">&amp;</span> <span class="n">SP6_IRQ_CLEAR</span><span class="p">)</span>
@@ -638,7 +638,7 @@ reptar-sp6-emul: sp6_emul_cmd_post ...done
 </pre></div>
 </div>
 <p>We then need to trigger the IRQ in the button call-back if they are enable. So we add the following code to <code class="docutils literal"><span class="pre">reptar_sp6_btns_event_process()</span></code>:</p>
-<div class="highlight-c"><div class="highlight"><pre><span class="kt">int</span> <span class="nf">reptar_sp6_btns_event_process</span><span class="p">(</span><span class="n">cJSON</span> <span class="o">*</span> <span class="n">object</span><span class="p">)</span>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="kt">int</span> <span class="nf">reptar_sp6_btns_event_process</span><span class="p">(</span><span class="n">cJSON</span> <span class="o">*</span> <span class="n">object</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="n">printf</span><span class="p">(</span><span class="s">&quot;reptar_sp6_btns_event_process()</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
 
@@ -684,55 +684,55 @@ reptar-sp6-emul: sp6_emul_cmd_post ...done
 </pre></div>
 </div>
 <p>We can then test the IRQ. First we check the CPU IRQ status register to check that no IRQ is raised. The IPS status  registers for the GPIO where the IRQ of FPGA is connected is called <strong>GPIO_IRQ_STATUS1</strong> and is at address 0x48310018 (see DM37xx manual p. 3517). We can read this register using U-Boot:</p>
-<div class="highlight-python"><div class="highlight"><pre>Reptar # md.l 0x48310018 1
-48310018: 00000000    ....
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Reptar</span> <span class="c1"># md.l 0x48310018 1</span>
+<span class="mi">48310018</span><span class="p">:</span> <span class="mi">00000000</span>    <span class="o">....</span>
 </pre></div>
 </div>
 <p>We check also the IRQ status register from the FPGA it-self:</p>
-<div class="highlight-python"><div class="highlight"><pre>Reptar # md.w 0x18000018 1
-18000018: 0000    ..
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Reptar</span> <span class="c1"># md.w 0x18000018 1</span>
+<span class="mi">18000018</span><span class="p">:</span> <span class="mi">0000</span>    <span class="o">..</span>
 </pre></div>
 </div>
 <p>We will then enable this interupt. This need to be done at CPU level and at FPGA level. For the CPU, we will write ones to the whole enable regsiters. They are two, called <strong>GPIO_RISINGDETECT</strong> and <strong>GPIO_IRQ_ENABLE1</strong> at address 0x48310048 and 0x4831001c. The first one is to select the edge that trigger the IRQ and the second is the general enable register. We need also to enable the IRQ at FPGA level by writting the <strong>IRQ_CTL_REG</strong> at <strong>0x18000018</strong>. For this we neet to set the 8th bit. We can do all this using the U-Boot prompt:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">Reptar</span> <span class="c"># mw.l 0x48310048 0xFFFFFFFF 1</span>
-<span class="n">Reptar</span> <span class="c"># mw.l 0x4831001c 0xFFFFFFFF 1</span>
-<span class="n">Reptar</span> <span class="c"># mw.w 0x18000018 0x0080 1</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Reptar</span> <span class="c1"># mw.l 0x48310048 0xFFFFFFFF 1</span>
+<span class="n">Reptar</span> <span class="c1"># mw.l 0x4831001c 0xFFFFFFFF 1</span>
+<span class="n">Reptar</span> <span class="c1"># mw.w 0x18000018 0x0080 1</span>
 </pre></div>
 </div>
 <p>We then can check that a button press modifiy the <strong>IRQ_CTL_REG</strong>. We read it just before pressing the button:</p>
-<div class="highlight-python"><div class="highlight"><pre>Reptar # md.l 0x48310018 1
-48310018: 00000000    ....
-Reptar # md.w 0x18000018
-18000018: 0080
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Reptar</span> <span class="c1"># md.l 0x48310018 1</span>
+<span class="mi">48310018</span><span class="p">:</span> <span class="mi">00000000</span>    <span class="o">....</span>
+<span class="n">Reptar</span> <span class="c1"># md.w 0x18000018</span>
+<span class="mi">18000018</span><span class="p">:</span> <span class="mi">0080</span>
 </pre></div>
 </div>
 <p>After pressing a button:</p>
-<div class="highlight-python"><div class="highlight"><pre>Reptar # md.w 0x18000018
-18000018: 0092    ..
-Reptar # md.l 0x48310018 1
-8310018: 00000400    ....
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Reptar</span> <span class="c1"># md.w 0x18000018</span>
+<span class="mi">18000018</span><span class="p">:</span> <span class="mi">0092</span>    <span class="o">..</span>
+<span class="n">Reptar</span> <span class="c1"># md.l 0x48310018 1</span>
+<span class="mi">8310018</span><span class="p">:</span> <span class="mi">00000400</span>    <span class="o">....</span>
 </pre></div>
 </div>
 <p>We see that the bit 4 was set in the <strong>IRQ_CTRL_REG</strong>. This bit is the <strong>IRQ_STATUS</strong> flag. It show that the IRQ is asserted at FPGA level. We see also that the bit 10 is set in the <strong>GPIO_IRQ_STATUS1</strong> register. This should correspond to tthe mapped IRQ in the the <code class="docutils literal"><span class="pre">qdev_get_gpio_in(s-&gt;cpu-&gt;gpio,</span> <span class="pre">10)</span></code> call in <code class="docutils literal"><span class="pre">reptar_init()</span></code> function.</p>
 <p>We can check that we can clear the IRQ from the FPGA level:</p>
-<div class="highlight-python"><div class="highlight"><pre>Reptar # mw.w 0x18000018 0x0081 1
-Reptar # md.w 0x18000018
-18000018: 0080    ..
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Reptar</span> <span class="c1"># mw.w 0x18000018 0x0081 1</span>
+<span class="n">Reptar</span> <span class="c1"># md.w 0x18000018</span>
+<span class="mi">18000018</span><span class="p">:</span> <span class="mi">0080</span>    <span class="o">..</span>
 </pre></div>
 </div>
 <p>This shows that the <strong>IRQ_STATUS</strong> flag was cleared (bit 4), but <strong>IRQ_ENABLE</strong> still remains (bit 7). We need to clear also the <strong>GPIO_IRQ_STATUS1</strong> by writing the bit again to &#8216;1&#8217;:</p>
-<div class="highlight-python"><div class="highlight"><pre>Reptar # md.l 0x48310018 1
-48310018: 00000400    ....
-Reptar # mw.l 0x48310018 0x00000400 1
-Reptar # md.l 0x48310018 1
-48310018: 00000000    ....
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Reptar</span> <span class="c1"># md.l 0x48310018 1</span>
+<span class="mi">48310018</span><span class="p">:</span> <span class="mi">00000400</span>    <span class="o">....</span>
+<span class="n">Reptar</span> <span class="c1"># mw.l 0x48310018 0x00000400 1</span>
+<span class="n">Reptar</span> <span class="c1"># md.l 0x48310018 1</span>
+<span class="mi">48310018</span><span class="p">:</span> <span class="mi">00000000</span>    <span class="o">....</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="segment-display-emulation">
 <h2>6) 7 segment display emulation<a class="headerlink" href="#segment-display-emulation" title="Permalink to this headline">¶</a></h2>
 <p>This section is about adding the emulation of the 7 segment perfieral. Thery are 3 &#8220;Seven Segment&#8221; display connected to the FPGA. They are at address offset from 0x0030 to 0x0034 (each 16 bits). First we have to implement the register that will control the 7 segment. This goes in the same way that for the LEDs in part 3. The code is added is give here after:</p>
-<div class="highlight-c"><div class="highlight"><pre><span class="c1">//... (code removed)</span>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="c1">//... (code removed)</span>
 <span class="cp">#define DISP_7SEG1_REG      0x0030</span>
 <span class="cp">#define DISP_7SEG2_REG      0x0032</span>
 <span class="cp">#define DISP_7SEG3_REG      0x0034</span>
@@ -754,7 +754,7 @@ Reptar # md.l 0x48310018 1
             <span class="p">{</span><span class="n">GUARD_REG</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">},</span>
 <span class="p">};</span>
 
-<span class="k">static</span> <span class="kt">sp6_state_t</span> <span class="n">sp6_state</span> <span class="o">=</span> <span class="p">{.</span><span class="n">regs</span><span class="o">=</span><span class="n">sp6_reg_state</span><span class="p">};</span>
+<span class="k">static</span> <span class="n">sp6_state_t</span> <span class="n">sp6_state</span> <span class="o">=</span> <span class="p">{.</span><span class="n">regs</span><span class="o">=</span><span class="n">sp6_reg_state</span><span class="p">};</span>
 
 <span class="c1">//... (code removed)</span>
 
@@ -790,21 +790,21 @@ Reptar # md.l 0x48310018 1
 </pre></div>
 </div>
 <p>We can then test the functionality by writing the register from the U-Boot prompt:</p>
-<div class="highlight-python"><div class="highlight"><pre>Reptar # mw.w 0x18000030 0x06
-Writing 7seg 1 to 6
-reptar-sp6-emul: sp6_emul_cmd_post
-reptar-sp6-emul: sp6_emul_cmd_post Inserting into queue...
-reptar-sp6-emul: sp6_emul_cmd_post ...done
-Reptar # mw.w 0x18000032 0x5B
-Writing 7seg 2 to 91
-reptar-sp6-emul: sp6_emul_cmd_post
-reptar-sp6-emul: sp6_emul_cmd_post Inserting into queue...
-reptar-sp6-emul: sp6_emul_cmd_post ...done
-Reptar # mw.w 0x18000034 0x4f
-Writing 7seg 3 to 79
-reptar-sp6-emul: sp6_emul_cmd_post
-reptar-sp6-emul: sp6_emul_cmd_post Inserting into queue...
-reptar-sp6-emul: sp6_emul_cmd_post ...done
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Reptar</span> <span class="c1"># mw.w 0x18000030 0x06</span>
+<span class="n">Writing</span> <span class="mi">7</span><span class="n">seg</span> <span class="mi">1</span> <span class="n">to</span> <span class="mi">6</span>
+<span class="n">reptar</span><span class="o">-</span><span class="n">sp6</span><span class="o">-</span><span class="n">emul</span><span class="p">:</span> <span class="n">sp6_emul_cmd_post</span>
+<span class="n">reptar</span><span class="o">-</span><span class="n">sp6</span><span class="o">-</span><span class="n">emul</span><span class="p">:</span> <span class="n">sp6_emul_cmd_post</span> <span class="n">Inserting</span> <span class="n">into</span> <span class="n">queue</span><span class="o">...</span>
+<span class="n">reptar</span><span class="o">-</span><span class="n">sp6</span><span class="o">-</span><span class="n">emul</span><span class="p">:</span> <span class="n">sp6_emul_cmd_post</span> <span class="o">...</span><span class="n">done</span>
+<span class="n">Reptar</span> <span class="c1"># mw.w 0x18000032 0x5B</span>
+<span class="n">Writing</span> <span class="mi">7</span><span class="n">seg</span> <span class="mi">2</span> <span class="n">to</span> <span class="mi">91</span>
+<span class="n">reptar</span><span class="o">-</span><span class="n">sp6</span><span class="o">-</span><span class="n">emul</span><span class="p">:</span> <span class="n">sp6_emul_cmd_post</span>
+<span class="n">reptar</span><span class="o">-</span><span class="n">sp6</span><span class="o">-</span><span class="n">emul</span><span class="p">:</span> <span class="n">sp6_emul_cmd_post</span> <span class="n">Inserting</span> <span class="n">into</span> <span class="n">queue</span><span class="o">...</span>
+<span class="n">reptar</span><span class="o">-</span><span class="n">sp6</span><span class="o">-</span><span class="n">emul</span><span class="p">:</span> <span class="n">sp6_emul_cmd_post</span> <span class="o">...</span><span class="n">done</span>
+<span class="n">Reptar</span> <span class="c1"># mw.w 0x18000034 0x4f</span>
+<span class="n">Writing</span> <span class="mi">7</span><span class="n">seg</span> <span class="mi">3</span> <span class="n">to</span> <span class="mi">79</span>
+<span class="n">reptar</span><span class="o">-</span><span class="n">sp6</span><span class="o">-</span><span class="n">emul</span><span class="p">:</span> <span class="n">sp6_emul_cmd_post</span>
+<span class="n">reptar</span><span class="o">-</span><span class="n">sp6</span><span class="o">-</span><span class="n">emul</span><span class="p">:</span> <span class="n">sp6_emul_cmd_post</span> <span class="n">Inserting</span> <span class="n">into</span> <span class="n">queue</span><span class="o">...</span>
+<span class="n">reptar</span><span class="o">-</span><span class="n">sp6</span><span class="o">-</span><span class="n">emul</span><span class="p">:</span> <span class="n">sp6_emul_cmd_post</span> <span class="o">...</span><span class="n">done</span>
 </pre></div>
 </div>
 <p>The following code shows changes the 7 segments on the frontend:</p>
@@ -812,7 +812,7 @@ reptar-sp6-emul: sp6_emul_cmd_post ...done
 <div><img alt="_images/7seg_active.png" src="_images/7seg_active.png" />
 </div></blockquote>
 <p>A test application for the 7 segment is available we can compile it and make it availabe to U-boot via TFTP:</p>
-<div class="highlight-console"><div class="highlight"><pre><span class="gp">redsuser@vm-reds-2015s2:~/seee_student$</span> <span class="nb">cd </span>7seg_u-boot/
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">redsuser@vm-reds-2015s2:~/seee_student$</span> <span class="nb">cd</span> 7seg_u-boot/
 
 <span class="gp">redsuser@vm-reds-2015s2:~/seee_student/7seg_u-boot$</span> make
 <span class="go">arm-linux-gnueabihf-gcc -g  -O0  -fno-common -ffixed-r8 -msoft-float  -D__KERNEL__ -DCONFIG_SYS_TEXT_BASE=0x80008000 -Iinclude -fno-builtin -ffreestanding -nostdinc -isystem /opt/linaro-arm-linux-gnueabihf/bin/../lib/gcc/arm-linux-gnueabihf/4.7.3/include -pipe  -DCONFIG_ARM -D__ARM__ -marm  -mabi=aapcs-linux -mno-thumb-interwork -march=armv5 -Wall -Wstrict-prototypes -c -o stubs.o stubs.c</span>
@@ -835,24 +835,182 @@ reptar-sp6-emul: sp6_emul_cmd_post ...done
 </pre></div>
 </div>
 <p>We can then run it from U-Boot:</p>
-<div class="highlight-python"><div class="highlight"><pre>Reptar # tftp 7seg_u-boot/7seg_u-boot.bin
-smc911x: detected LAN9118 controller
-smc911x: phy initialized
-smc911x: MAC e4:af:a1:40:01:fe
-Using smc911x-0 device
-TFTP from server 10.0.2.2; our IP address is 10.0.2.10
-Filename &#39;7seg_u-boot/7seg_u-boot.bin&#39;.
-Load address: 0x81600000
-Loading: #######
-done
-Bytes transferred = 34932 (8874 hex)
-Reptar # go 0x81600000
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Reptar</span> <span class="c1"># tftp 7seg_u-boot/7seg_u-boot.bin</span>
+<span class="n">smc911x</span><span class="p">:</span> <span class="n">detected</span> <span class="n">LAN9118</span> <span class="n">controller</span>
+<span class="n">smc911x</span><span class="p">:</span> <span class="n">phy</span> <span class="n">initialized</span>
+<span class="n">smc911x</span><span class="p">:</span> <span class="n">MAC</span> <span class="n">e4</span><span class="p">:</span><span class="n">af</span><span class="p">:</span><span class="n">a1</span><span class="p">:</span><span class="mi">40</span><span class="p">:</span><span class="mi">01</span><span class="p">:</span><span class="n">fe</span>
+<span class="n">Using</span> <span class="n">smc911x</span><span class="o">-</span><span class="mi">0</span> <span class="n">device</span>
+<span class="n">TFTP</span> <span class="kn">from</span> <span class="nn">server</span> <span class="mf">10.0</span><span class="o">.</span><span class="mf">2.2</span><span class="p">;</span> <span class="n">our</span> <span class="n">IP</span> <span class="n">address</span> <span class="ow">is</span> <span class="mf">10.0</span><span class="o">.</span><span class="mf">2.10</span>
+<span class="n">Filename</span> <span class="s1">&#39;7seg_u-boot/7seg_u-boot.bin&#39;</span><span class="o">.</span>
+<span class="n">Load</span> <span class="n">address</span><span class="p">:</span> <span class="mh">0x81600000</span>
+<span class="n">Loading</span><span class="p">:</span> <span class="c1">#######</span>
+<span class="n">done</span>
+<span class="n">Bytes</span> <span class="n">transferred</span> <span class="o">=</span> <span class="mi">34932</span> <span class="p">(</span><span class="mi">8874</span> <span class="nb">hex</span><span class="p">)</span>
+<span class="n">Reptar</span> <span class="c1"># go 0x81600000</span>
 </pre></div>
 </div>
 <p>We can then observe the number on the 3 seven segment display changing in the frond-end !</p>
 </div>
 <div class="section" id="mini-application">
 <h2>7) Mini-application<a class="headerlink" href="#mini-application" title="Permalink to this headline">¶</a></h2>
+<p>The following program, uses the button to manage 3 counters that are displayed on the 7 segment displays. Button <strong>SW3</strong> enable to quit te application:</p>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;common.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;command.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;asm/arch/mux.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;asm/io.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;asm/errno.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&quot;board/ti/reptar/reptar.h&quot;</span><span class="cp"></span>
+
+<span class="cp">#define SW1 (1&lt;&lt;0)</span>
+<span class="cp">#define SW2 (1&lt;&lt;1)</span>
+<span class="cp">#define SW3 (1&lt;&lt;2)</span>
+<span class="cp">#define SW4 (1&lt;&lt;3)</span>
+<span class="cp">#define SW5 (1&lt;&lt;4)</span>
+
+<span class="k">extern</span> <span class="kt">int</span> <span class="nf">sevenseg_putc</span><span class="p">(</span><span class="kt">int</span> <span class="n">index</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">number</span><span class="p">);</span>
+
+<span class="kt">int</span> <span class="n">old_state</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="kt">int</span> <span class="n">new_state</span> <span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+
+<span class="kt">int</span> <span class="nf">buttons</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+<span class="kt">void</span> <span class="nf">sample</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+<span class="kt">void</span> <span class="nf">latch</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+<span class="kt">int</span> <span class="nf">is_rising</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">bit</span><span class="p">);</span>
+
+<span class="cp">#define handle_counter(i) \</span>
+<span class="cp">counters[i]++;\</span>
+<span class="cp">if(counters[i] &gt;= 10)\</span>
+<span class="cp">{\</span>
+<span class="cp">    counters[i] = 0;\</span>
+<span class="cp">}\</span>
+<span class="cp">sevenseg_putc(i, counters[i]);</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">argv</span><span class="p">[])</span>
+<span class="p">{</span>
+    <span class="kt">int</span> <span class="n">counters</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">};</span>
+
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Start of the Miniapp U-boot Standalone Application</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+
+    <span class="n">sevenseg_putc</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+    <span class="n">sevenseg_putc</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+    <span class="n">sevenseg_putc</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+
+    <span class="k">while</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="p">{</span>
+            <span class="c1">// Sample the button inputs</span>
+            <span class="n">sample</span><span class="p">();</span>
+
+            <span class="c1">// Modify internal state</span>
+            <span class="k">if</span><span class="p">(</span> <span class="n">is_falling</span><span class="p">(</span><span class="n">SW2</span><span class="p">))</span>
+                    <span class="n">handle_counter</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+            <span class="k">if</span><span class="p">(</span> <span class="n">is_falling</span><span class="p">(</span><span class="n">SW5</span><span class="p">))</span>
+                    <span class="n">handle_counter</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+            <span class="k">if</span><span class="p">(</span> <span class="n">is_falling</span><span class="p">(</span><span class="n">SW4</span><span class="p">))</span>
+                    <span class="n">handle_counter</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">is_falling</span><span class="p">(</span><span class="n">SW3</span><span class="p">))</span>
+                    <span class="k">break</span><span class="p">;</span>
+
+            <span class="c1">// Save input states</span>
+            <span class="n">latch</span><span class="p">();</span>
+    <span class="p">}</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Stop of the Miniapp U-boot Standalone Application</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">buttons</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">readw</span><span class="p">(</span><span class="n">SP6_PUSH_BUT</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">sample</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">new_state</span> <span class="o">=</span> <span class="n">buttons</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">latch</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">old_state</span> <span class="o">=</span> <span class="n">new_state</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">is_rising</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">bit</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">new_state</span> <span class="o">&amp;</span> <span class="n">bit</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="p">(</span><span class="n">old_state</span> <span class="o">&amp;</span> <span class="n">bit</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">is_falling</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">bit</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="o">!</span><span class="p">(</span><span class="n">new_state</span> <span class="o">&amp;</span> <span class="n">bit</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">old_state</span> <span class="o">&amp;</span> <span class="n">bit</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>To test the application simply run:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">redsuser@vm-reds-2015s2:~/seee_student$</span> cp miniapp_u-boot/miniapp_u-boot ~/tftpboot
+<span class="gp">redsuser@vm-reds-2015s2:~/seee_student$</span> ./stq
+<span class="go">libGL error: pci id for fd 12: 80ee:beef, driver (null)</span>
+<span class="go">libGL error: core dri or dri2 extension not found</span>
+<span class="go">libGL error: failed to load driver: vboxvideo</span>
+<span class="go">Running QEMU</span>
+<span class="go">sp6_class_init()</span>
+<span class="go">WARNING: Image format was not specified for &#39;filesystem/flash&#39; and probing guessed raw.</span>
+<span class="go">         Automatically detecting the format is dangerous for raw images, write operations on block 0 will be restricted.</span>
+<span class="go">         Specify the &#39;raw&#39; format explicitly to remove the restrictions.</span>
+<span class="go">WARNING: Image format was not specified for &#39;filesystem/sd-card.img&#39; and probing guessed raw.</span>
+<span class="go">         Automatically detecting the format is dangerous for raw images, write operations on block 0 will be restricted.</span>
+<span class="go">         Specify the &#39;raw&#39; format explicitly to remove the restrictions.</span>
+<span class="go">sysbus_create_simple()</span>
+<span class="go">sp6_initfn()</span>
+
+
+<span class="go">U-Boot 2011.09-00000-g9af6a15 (Feb 10 2015 - 16:10:59)</span>
+
+<span class="go">U-Boot code: 80008000 -&gt; 80065570  BSS: -&gt; 800F7C68</span>
+<span class="go">OMAP35XX-GP ES3.1, CPU-OPP2, L3-165MHz, Max CPU Clock 600 mHz</span>
+<span class="go">REPTAR Board + LPDDR/NAND</span>
+<span class="go">I2C:   ready</span>
+<span class="go">monitor len: 000EFC68</span>
+<span class="go">ramsize: 10000000</span>
+<span class="go">TLB table at: 8fff0000</span>
+<span class="go">Top of RAM usable for U-Boot at: 8fff0000</span>
+<span class="go">Reserving 959k for U-Boot at: 8ff00000</span>
+<span class="go">Reserving 136k for malloc() at: 8fede000</span>
+<span class="go">Reserving 32 Bytes for Board Info at: 8feddfe0</span>
+<span class="go">Reserving 128 Bytes for Global Data at: 8feddf60</span>
+<span class="go">New Stack Pointer is: 8feddf50</span>
+<span class="go">RAM Configuration:</span>
+<span class="go">Bank #0: 80000000 256 MiB</span>
+<span class="go">Bank #1: 90000000 0 Bytes</span>
+<span class="go">relocation Offset is: 0fef8000</span>
+<span class="go">WARNING: Caches not enabled</span>
+<span class="go">monitor flash len: 00066970</span>
+<span class="go">Now running in RAM - U-Boot at: 8ff00000</span>
+<span class="go">Flash: 16 KiB</span>
+<span class="go">Flash pflash NOR detected.</span>
+<span class="go">MMC:   OMAP SD/MMC: 0</span>
+<span class="go">In:    serial</span>
+<span class="go">Out:   serial</span>
+<span class="go">Err:   serial</span>
+<span class="go">fpga_init: CONFIG_FPGA = 0x1</span>
+<span class="go">Net:   smc911x-0</span>
+<span class="go">Warning: smc911x-0 MAC addresses don&#39;t match:</span>
+<span class="go">Address in SROM is         52:54:00:12:34:56</span>
+<span class="go">Address in environment is  e4:af:a1:40:01:fe</span>
+
+<span class="go">Reptar # tftp miniapp_u-boot/miniapp_u-boot.bin</span>
+<span class="go">smc911x: detected LAN9118 controller</span>
+<span class="go">smc911x: phy initialized</span>
+<span class="go">smc911x: MAC e4:af:a1:40:01:fe</span>
+<span class="go">Using smc911x-0 device</span>
+<span class="go">TFTP from server 10.0.2.2; our IP address is 10.0.2.10</span>
+<span class="go">Filename &#39;miniapp_u-boot/miniapp_u-boot.bin&#39;.</span>
+<span class="go">Load address: 0x81600000</span>
+<span class="go">Loading: #######</span>
+<span class="go">done</span>
+<span class="go">Bytes transferred = 35352 (8a18 hex)</span>
+<span class="go">Reptar # go 0x81600000</span>
+<span class="gp">#</span><span class="c1"># Starting application at 0x81600000 ...</span>
+<span class="go">Start of the Miniapp U-boot Standalone Application</span>
+</pre></div>
+</div>
 </div>
 </div>
 

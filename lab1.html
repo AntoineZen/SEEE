@@ -82,7 +82,7 @@
             
             
                 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="">REPTAR Introduction</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">REPTAR Introduction</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#environment-setup">1) Environment setup</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#qemu-startup">2) QEMU startup</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#u-boot-test">3) U-Boot test</a></li>
@@ -114,7 +114,7 @@
         <div class="rst-content">
           
 
-
+ 
 
 
 
@@ -147,7 +147,7 @@
 <a class="reference external" href="mailto:redsuser&#37;&#52;&#48;vm-reds-2015s2">redsuser<span>&#64;</span>vm-reds-2015s2</a>:~$ cd seee_student/</div></blockquote>
 <p>We can now open Ecplise and select <cite>/home/redsuser/seee_student</cite> as workspace.</p>
 <p>Next step is to build the QEMU emulator. The project downloaded is not clean, so we need to clean it first. Then we can build the emulator:</p>
-<div class="highlight-python"><div class="highlight"><pre>redsuser@vm-reds-2015s2:~/seee_student$ cd qemu-reds
+<div class="highlight-default"><div class="highlight"><pre><span></span>redsuser@vm-reds-2015s2:~/seee_student$ cd qemu-reds
 redsuser@vm-reds-2015s2:~/seee_student/qemu-red$ make distclean
 redsuser@vm-reds-2015s2:~/seee_student/qemu-red$ cd..
 redsuser@vm-reds-2015s2:~/seee_student$ make qemu
@@ -163,7 +163,7 @@ redsuser@vm-reds-2015s2:~/seee_student$ make qemu
 </div></blockquote>
 <p>We can see that the emulator is stopped int the __GI_pppoll() function. We can then stop the execution.</p>
 <p>From the command line we can start the QEMU as well at we arrive in the U-Boot environment:</p>
-<div class="highlight-python"><div class="highlight"><pre>redsuser@vm-reds-2015s2:~/seee_student$ ../stf
+<div class="highlight-default"><div class="highlight"><pre><span></span>redsuser@vm-reds-2015s2:~/seee_student$ ../stf
 bash: ../stf: No such file or directory
 redsuser@vm-reds-2015s2:~/seee_student$ ./stf
 WARNING: Image format was not specified for &#39;filesystem/flash&#39; and probing guessed raw.
@@ -218,7 +218,7 @@ Reptar #
 <div class="section" id="u-boot-test">
 <h2>3) U-Boot test<a class="headerlink" href="#u-boot-test" title="Permalink to this headline">¶</a></h2>
 <p>For the U-Boot command prompt we can enter command like printing the environment:</p>
-<div class="highlight-python"><div class="highlight"><pre>Reptar # printenv
+<div class="highlight-default"><div class="highlight"><pre><span></span>Reptar # printenv
 baudrate=115200
 boot_linux=mmc rescan; fatload mmc 0 ${loadaddr} uImage; setenv bootargs console=ttyO2,115200n8 noinitrd rw consoleblank=0 root=/dev/mmcblk0p2 rootwait ethaddr=${ethaddr} ip=${ipaddr}:${serverip}:${gatewayip}:${netmask}:::off; bootm ${loadaddr}
 bootargs=console=ttyO2,115200n8 noinitrd rw consoleblank=0 root=/dev/mmcblk0p2 rootwait bootm 0x81600000
@@ -245,7 +245,7 @@ Environment size: 949/4092 bytes
 </pre></div>
 </div>
 <p>We can then buid the U-Boot demo executable:</p>
-<div class="highlight-python"><div class="highlight"><pre>redsuser@vm-reds-2015s2:~/seee_student$ cd helloworld_u-boot/
+<div class="highlight-default"><div class="highlight"><pre><span></span>redsuser@vm-reds-2015s2:~/seee_student$ cd helloworld_u-boot/
 redsuser@vm-reds-2015s2:~/seee_student/helloworld_u-boot$ make
 arm-linux-gnueabihf-gcc -g  -O0  -fno-common -ffixed-r8 -msoft-float  -D__KERNEL__ -Iinclude -fno-builtin -ffreestanding -nostdinc -isystem /opt/linaro-arm-linux-gnueabihf/bin/../lib/gcc/arm-linux-gnueabihf/4.7.3/include -pipe  -DCONFIG_ARM -D__ARM__ -marm  -mabi=aapcs-linux -mno-thumb-interwork  -Wall -Wstrict-prototypes -c -o stubs.o stubs.c
 arm-linux-gnueabihf-ar crv libstubs.a stubs.o
@@ -258,38 +258,38 @@ arm-linux-gnueabihf-ld -g  -Ttext 0x81600000 \
 </pre></div>
 </div>
 <p>We can run this executable frome U-Boot. First we need to make the binary image availbe on the TFTP server. For this we copy it to the tftpboot foldeer:</p>
-<div class="highlight-python"><div class="highlight"><pre>redsuser@vm-reds-2015s2:~/seee_student$ cp helloworld_u-boot/helloworld.bin ../tftpboot/helloworld_u-boot
+<div class="highlight-default"><div class="highlight"><pre><span></span>redsuser@vm-reds-2015s2:~/seee_student$ cp helloworld_u-boot/helloworld.bin ../tftpboot/helloworld_u-boot
 redsuser@vm-reds-2015s2:~/seee_student$
 </pre></div>
 </div>
 <p>Then in U-Boot wen can load this image using TFTP and the predefined variables:</p>
-<div class="highlight-python"><div class="highlight"><pre>Reptar # run tftp1
-smc911x: detected LAN9118 controller
-smc911x: phy initialized
-smc911x: MAC e4:af:a1:40:01:fe
-Using smc911x-0 device
-TFTP from server 10.0.2.2; our IP address is 10.0.2.10
-Filename &#39;helloworld_u-boot/helloworld.bin&#39;.
-Load address: 0x81600000
-Loading: #
-done
-Bytes transferred = 776 (308 hex)
-Reptar # go
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Reptar</span> <span class="c1"># run tftp1</span>
+<span class="n">smc911x</span><span class="p">:</span> <span class="n">detected</span> <span class="n">LAN9118</span> <span class="n">controller</span>
+<span class="n">smc911x</span><span class="p">:</span> <span class="n">phy</span> <span class="n">initialized</span>
+<span class="n">smc911x</span><span class="p">:</span> <span class="n">MAC</span> <span class="n">e4</span><span class="p">:</span><span class="n">af</span><span class="p">:</span><span class="n">a1</span><span class="p">:</span><span class="mi">40</span><span class="p">:</span><span class="mi">01</span><span class="p">:</span><span class="n">fe</span>
+<span class="n">Using</span> <span class="n">smc911x</span><span class="o">-</span><span class="mi">0</span> <span class="n">device</span>
+<span class="n">TFTP</span> <span class="kn">from</span> <span class="nn">server</span> <span class="mf">10.0</span><span class="o">.</span><span class="mf">2.2</span><span class="p">;</span> <span class="n">our</span> <span class="n">IP</span> <span class="n">address</span> <span class="ow">is</span> <span class="mf">10.0</span><span class="o">.</span><span class="mf">2.10</span>
+<span class="n">Filename</span> <span class="s1">&#39;helloworld_u-boot/helloworld.bin&#39;</span><span class="o">.</span>
+<span class="n">Load</span> <span class="n">address</span><span class="p">:</span> <span class="mh">0x81600000</span>
+<span class="n">Loading</span><span class="p">:</span> <span class="c1">#</span>
+<span class="n">done</span>
+<span class="n">Bytes</span> <span class="n">transferred</span> <span class="o">=</span> <span class="mi">776</span> <span class="p">(</span><span class="mi">308</span> <span class="nb">hex</span><span class="p">)</span>
+<span class="n">Reptar</span> <span class="c1"># go</span>
 </pre></div>
 </div>
 <p>And Then we can start the loaded image as we know the loading address of the image for the output of the TFTP command:</p>
-<div class="highlight-python"><div class="highlight"><pre>Reptar # go 0x81600000
-## Starting application at 0x81600000 ...
-Example expects ABI version 6
-Actual U-Boot ABI version 6
-Hello World
-argc = 1
-argv[0] = &quot;0x81600000&quot;
-argv[1] = &quot;&lt;NULL&gt;&quot;
-Hit any key to exit ...
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Reptar</span> <span class="c1"># go 0x81600000</span>
+<span class="c1">## Starting application at 0x81600000 ...</span>
+<span class="n">Example</span> <span class="n">expects</span> <span class="n">ABI</span> <span class="n">version</span> <span class="mi">6</span>
+<span class="n">Actual</span> <span class="n">U</span><span class="o">-</span><span class="n">Boot</span> <span class="n">ABI</span> <span class="n">version</span> <span class="mi">6</span>
+<span class="n">Hello</span> <span class="n">World</span>
+<span class="n">argc</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;0x81600000&quot;</span>
+<span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&lt;NULL&gt;&quot;</span>
+<span class="n">Hit</span> <span class="nb">any</span> <span class="n">key</span> <span class="n">to</span> <span class="n">exit</span> <span class="o">...</span>
 
-## Application terminated, rc = 0x0
-Reptar #
+<span class="c1">## Application terminated, rc = 0x0</span>
+<span class="n">Reptar</span> <span class="c1">#</span>
 </pre></div>
 </div>
 <p>We can then debug this application. For this, First start the emulator with the <cite>./stf</cite> script. Then in Ecplipse we select the <strong>helloworld_u-boot Debug</strong> debug confiuration. The debuger start but noting appends. We need to load manualy the image in U-Boot as described above. We have have then the debugger ready in elcpise:</p>
@@ -300,7 +300,7 @@ Reptar #
 <div class="section" id="linux-test">
 <h2>4) Linux test<a class="headerlink" href="#linux-test" title="Permalink to this headline">¶</a></h2>
 <p>We can deploy the Linux kernel on the virtual SD card of the emulator. For this we have script ready:</p>
-<div class="highlight-python"><div class="highlight"><pre>redsuser@vm-reds-2015s2:~/seee_student$ ./deploy
+<div class="highlight-default"><div class="highlight"><pre><span></span>redsuser@vm-reds-2015s2:~/seee_student$ ./deploy
 Deploying into reptar rootfs ...
 Mounting filesystem/sd-card.img...
 [sudo] password for redsuser:
@@ -315,7 +315,7 @@ Done !
 </pre></div>
 </div>
 <p>We can then compile the test appication provided:</p>
-<div class="highlight-python"><div class="highlight"><pre>redsuser@vm-reds-2015s2:~/seee_student$ cd helloworld_linux/
+<div class="highlight-default"><div class="highlight"><pre><span></span>redsuser@vm-reds-2015s2:~/seee_student$ cd helloworld_linux/
 redsuser@vm-reds-2015s2:~/seee_student/helloworld_linux$ ll
 total 32
 drwxrwxr-x  2 redsuser redsuser  4096 Feb 21 11:14 ./
@@ -330,7 +330,7 @@ arm-linux-gnueabihf-gcc -o helloworld helloworld.o
 </pre></div>
 </div>
 <p>And we copy it to the rootfs of the linux image:</p>
-<div class="highlight-python"><div class="highlight"><pre>redsuser@vm-reds-2015s2:~/seee_student$ ./mount-sd.sh
+<div class="highlight-default"><div class="highlight"><pre><span></span>redsuser@vm-reds-2015s2:~/seee_student$ ./mount-sd.sh
 Mounting filesystem/sd-card.img...
 SD card partitions mounted in &#39;boot_tmp&#39; and &#39;filesystem_tmp&#39; directories
 redsuser@vm-reds-2015s2:~/seee_student$ sudo cp helloworld_linux/helloworld filesystem_tmp/root/
@@ -342,7 +342,7 @@ Done !
 </pre></div>
 </div>
 <p>We can start the QEMU emulator with the virtual SD-CARD using the <cite>./stq</cite> script:</p>
-<div class="highlight-python"><div class="highlight"><pre>redsuser@vm-reds-2015s2:~/seee_student$ ./stq
+<div class="highlight-default"><div class="highlight"><pre><span></span>redsuser@vm-reds-2015s2:~/seee_student$ ./stq
 libGL error: failed to authenticate magic 3
 libGL error: failed to load driver: vboxvideo
 Running QEMU
@@ -393,7 +393,7 @@ Reptar #
 </pre></div>
 </div>
 <p>Form the U-Boot prompt we can start the linux kernel using the <cite>boot</cite> command:</p>
-<div class="highlight-python"><div class="highlight"><pre>Reptar # boot
+<div class="highlight-default"><div class="highlight"><pre><span></span>Reptar # boot
 reading uImage
 
 3051480 bytes read
@@ -646,19 +646,19 @@ reptar login:
 </pre></div>
 </div>
 <p>We can login to the linux console using the provieded username &amp; password (&#8220;root&#8221; &amp; &#8220;root&#8221;) and start the executable that is already in the filesystem (placed by previous step):</p>
-<div class="highlight-python"><div class="highlight"><pre>*** Welcome on REPTAR (HEIG-VD/REDS): use root/root to log in ***
-reptar login: root
-Password:
-# ls
-Settings         fs               helloworld       rootfs_domU.img
-# ./helloworld
-Hello world within Linux
-argv[0] = ./helloworld
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">***</span> <span class="n">Welcome</span> <span class="n">on</span> <span class="n">REPTAR</span> <span class="p">(</span><span class="n">HEIG</span><span class="o">-</span><span class="n">VD</span><span class="o">/</span><span class="n">REDS</span><span class="p">):</span> <span class="n">use</span> <span class="n">root</span><span class="o">/</span><span class="n">root</span> <span class="n">to</span> <span class="n">log</span> <span class="ow">in</span> <span class="o">***</span>
+<span class="n">reptar</span> <span class="n">login</span><span class="p">:</span> <span class="n">root</span>
+<span class="n">Password</span><span class="p">:</span>
+<span class="c1"># ls</span>
+<span class="n">Settings</span>         <span class="n">fs</span>               <span class="n">helloworld</span>       <span class="n">rootfs_domU</span><span class="o">.</span><span class="n">img</span>
+<span class="c1"># ./helloworld</span>
+<span class="n">Hello</span> <span class="n">world</span> <span class="n">within</span> <span class="n">Linux</span>
+<span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="o">./</span><span class="n">helloworld</span>
 </pre></div>
 </div>
 <p>We can start as well a Qt demo and see it in the emulator windows. For this, we need to start the application using the following command:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="c"># /usr/share/qt/examples/effects/lighting/lighting -qws &amp;</span>
-<span class="c">#</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># /usr/share/qt/examples/effects/lighting/lighting -qws &amp;</span>
+<span class="c1">#</span>
 </pre></div>
 </div>
 <p>We can then see the following graphics inside the QEMU windows:</p>
@@ -669,14 +669,14 @@ argv[0] = ./helloworld
 <div class="section" id="test-on-real-platform">
 <h2>5) Test on real platform<a class="headerlink" href="#test-on-real-platform" title="Permalink to this headline">¶</a></h2>
 <p>On this this step we will load the U-Boot helloworld program as we did in step 3, but this time on the REPTAR hardware. For this we need to connect the REPTAR to the host PC using Ethernet and USB. The USB connection is emulating a Serial port on the host PC. The Ethernet Interface on the PC also needs to be configured to have the IP <strong>192.168.1.1</strong> as the U-Boot on the Hardware is configured to download from this address. We need to open the serial port with an appropriate program:</p>
-<div class="highlight-python"><div class="highlight"><pre>$ sudo picocom -b 115200 /dev/ttyUSB0
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo picocom -b 115200 /dev/ttyUSB0
 </pre></div>
 </div>
 <p>We have now access to the REPATR U-Boot console. We need first to setup the networking paramteres using the predefined command:</p>
 <blockquote>
 <div>Reptar # run setmac setip</div></blockquote>
 <p>Once this is done, we can transfer the application using TFTP:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">Reptar</span> <span class="c"># tftp helloworld_u-boot</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Reptar</span> <span class="c1"># tftp helloworld_u-boot</span>
 </pre></div>
 </div>
 <p>And we can run it:</p>
