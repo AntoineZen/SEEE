@@ -7,8 +7,8 @@ REPTAR Introduction
 This part has the goal to setup and to make a first contact with the environment used for the SEEE hand-on work (laboratory).
 
 
-1) Environment setup
---------------------
+Environment setup
+-----------------
 
 The project files are provided as a tarball. The tarball was downloaded in the `~/Downloads` directory. We can exctract the repository with the following commands:
 
@@ -25,8 +25,8 @@ Next step is to build the QEMU emulator. The project downloaded is not clean, so
 	redsuser@vm-reds-2015s2:~/seee_student/qemu-red$ cd..
         redsuser@vm-reds-2015s2:~/seee_student$ make qemu
 
-2) QEMU startup
----------------
+QEMU startup
+------------
 
 We can then run the Emulator direcly from Eclipse. For that select *Run -> Debug Configuration*. Then select the *gemu-reds Debug* configuration and click *Debug*. A black Windows apears, this is the emulator windows. 
 
@@ -89,8 +89,8 @@ From the command line we can start the QEMU as well at we arrive in the U-Boot e
 	Reptar # 
 
 
-3) U-Boot test
---------------
+U-Boot test
+-----------
 
 For the U-Boot command prompt we can enter command like printing the environment::
 
@@ -176,8 +176,8 @@ We can then debug this application. For this, First start the emulator with the 
 	.. image:: uboot_helloworld_debug.png
 
 
-4) Linux test
--------------
+Linux test
+----------
 
 
 We can deploy the Linux kernel on the virtual SD card of the emulator. For this we have script ready::
@@ -554,8 +554,8 @@ We can then see the following graphics inside the QEMU windows:
 
 
 
-5) Test on real platform
-------------------------
+Test on real platform
+---------------------
 
 On this this step we will load the U-Boot helloworld program as we did in step 3, but this time on the REPTAR hardware. For this we need to connect the REPTAR to the host PC using Ethernet and USB. The USB connection is emulating a Serial port on the host PC. The Ethernet Interface on the PC also needs to be configured to have the IP **192.168.1.1** as the U-Boot on the Hardware is configured to download from this address. We need to open the serial port with an appropriate program::
 
@@ -576,10 +576,10 @@ And we can run it:
 
 
 
-6) REPTAR periferal access
---------------------------
+REPTAR periferal access
+-----------------------
 
-
+TBD
 
 
 

@@ -4,8 +4,8 @@ Periferal Emulations
 In this lab, we study how to intergrate new perfiferal into the QEMU emulator. We will register a new periferal that emulate part of the FPGA that is present on the readl Reptar hardware.
 
 
-1) QEMU environment and repatar machine
----------------------------------------
+QEMU environment and repatar machine
+------------------------------------
 
 This part is an handover of the QEMU envionment provided for the lab. First part try to run the *qtemu* witch is the frontend to the QEMU and reptar emulation. To start *QEMU* and the *qtemu* togeter, we can can run the ``stq`` script::
 
@@ -80,8 +80,8 @@ We can re-compile by hand the QUEM::
 
 
 
-2) Spartan 6 FPGA Emulation
----------------------------
+Spartan 6 FPGA Emulation
+------------------------
 
 In this part, we will implement the Spartan 6 FPGA handler in QEMU. We will map its physical address space (but still emulated) to callback functions. There will be a callback for the read and one for the write. 
 
@@ -241,8 +241,8 @@ Test Write of value "35" at address 0x18000000::
 We see the output of the ``printf()`` stament implemented in the ``sp6_write()`` callback.
 
     
-3) LED devices emulation
-------------------------
+LED devices emulation
+---------------------
 
 Once the Spartan 6 periferal is created and reachable from the emulated CPU, we need to implement the periferal behavior. The first part will be the LED output. The LEDS are driven by a single register. Each bit represent a LED. The offset for this register is **0x003a**.
 
@@ -364,8 +364,8 @@ The front end then shows the patern 0xAA on the LEDs:
 
     .. image:: stq_result.png
     
-4) Button emulation
---------------------
+Button emulation
+----------------
 
 In this part, we are required to make the button availabe to the software. For this, a call back will modify the register values. This callback is already provided in the file ``reptar_sp6_button.c`` and is called ``reptar_sp6_btns_event_process()``.
 
@@ -500,8 +500,8 @@ We can then run it from the emulator:
     ...
     
 
-5) IRQ managment with buttons
------------------------------
+IRQ managment with buttons
+--------------------------
 
 We will add the IRQ managment to the buttons. For this we need to tell the QUEM that our device have the ablitiy to make IRQ and request an IRQ number. For this we should add the following call to ``sp6_initfn()``:
 
@@ -665,8 +665,8 @@ This shows that the **IRQ_STATUS** flag was cleared (bit 4), but **IRQ_ENABLE** 
     Reptar # md.l 0x48310018 1 
     48310018: 00000000    ....
     
-6) 7 segment display emulation
-------------------------------
+7 segment display emulation
+---------------------------
 
 This section is about adding the emulation of the 7 segment perfieral. Thery are 3 "Seven Segment" display connected to the FPGA. They are at address offset from 0x0030 to 0x0034 (each 16 bits). First we have to implement the register that will control the 7 segment. This goes in the same way that for the LEDs in part 3. The code is added is give here after:
 
@@ -796,8 +796,8 @@ We can then run it from U-Boot::
 
 We can then observe the number on the 3 seven segment display changing in the frond-end !
 
-7) Mini-application
--------------------
+Mini-application
+----------------
 
 
 The following program, uses the button to manage 3 counters that are displayed on the 7 segment displays. Button **SW3** enable to quit te application:
