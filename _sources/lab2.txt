@@ -798,3 +798,169 @@ We can then observe the number on the 3 seven segment display changing in the fr
 
 7) Mini-application
 -------------------
+
+
+The following program, uses the button to manage 3 counters that are displayed on the 7 segment displays. Button **SW3** enable to quit te application:
+
+.. code-block:: c
+
+    #include <common.h>
+    #include <command.h>
+    #include <asm/arch/mux.h>
+    #include <asm/io.h>
+    #include <asm/errno.h>
+    #include "board/ti/reptar/reptar.h"
+    
+    #define SW1 (1<<0)
+    #define SW2 (1<<1)
+    #define SW3 (1<<2)
+    #define SW4 (1<<3)
+    #define SW5 (1<<4)
+    
+    extern int sevenseg_putc(int index, unsigned char number);
+    
+    int old_state = 0;
+    int new_state =0;
+    
+    int buttons(void);
+    void sample(void);
+    void latch(void);
+    int is_rising(unsigned int bit);
+    
+    #define handle_counter(i) \
+    counters[i]++;\
+    if(counters[i] >= 10)\
+    {\
+    	counters[i] = 0;\
+    }\
+    sevenseg_putc(i, counters[i]);
+    
+    int main(int argc, char *argv[])
+    {	
+    	int counters[] = {0, 0, 0};
+    
+    	printf("Start of the Miniapp U-boot Standalone Application\n");
+    
+    	sevenseg_putc(0, 0);
+    	sevenseg_putc(1, 0);
+    	sevenseg_putc(2, 0);
+    
+    	while(1)
+    	{
+    		// Sample the button inputs
+    		sample();
+    
+    		// Modify internal state
+    		if( is_falling(SW2))
+    			handle_counter(0);
+    		if( is_falling(SW5))
+    			handle_counter(1);
+    		if( is_falling(SW4))
+    			handle_counter(2);
+    		if (is_falling(SW3))
+    			break;
+    
+    		// Save input states
+    		latch();
+    	}
+    	printf("Stop of the Miniapp U-boot Standalone Application\n");
+    	return 0;
+    }
+    
+    int buttons()
+    {
+    	return readw(SP6_PUSH_BUT);
+    }
+    
+    void sample(void)
+    {
+    	new_state = buttons();
+    }
+    
+    void latch(void)
+    {
+    	old_state = new_state;
+    }
+    
+    int is_rising(unsigned int bit)
+    {
+    	return (new_state & bit) && !(old_state & bit);
+    }
+    
+    int is_falling(unsigned int bit)
+    {
+    	return !(new_state & bit) && (old_state & bit);
+    }
+
+
+To test the application simply run:
+
+.. code-block:: console
+
+    redsuser@vm-reds-2015s2:~/seee_student$ cp miniapp_u-boot/miniapp_u-boot ~/tftpboot
+    redsuser@vm-reds-2015s2:~/seee_student$ ./stq
+    libGL error: pci id for fd 12: 80ee:beef, driver (null)
+    libGL error: core dri or dri2 extension not found
+    libGL error: failed to load driver: vboxvideo
+    Running QEMU
+    sp6_class_init()
+    WARNING: Image format was not specified for 'filesystem/flash' and probing guessed raw.
+             Automatically detecting the format is dangerous for raw images, write operations on block 0 will be restricted.
+             Specify the 'raw' format explicitly to remove the restrictions.
+    WARNING: Image format was not specified for 'filesystem/sd-card.img' and probing guessed raw.
+             Automatically detecting the format is dangerous for raw images, write operations on block 0 will be restricted.
+             Specify the 'raw' format explicitly to remove the restrictions.
+    sysbus_create_simple()
+    sp6_initfn()
+    
+    
+    U-Boot 2011.09-00000-g9af6a15 (Feb 10 2015 - 16:10:59)
+    
+    U-Boot code: 80008000 -> 80065570  BSS: -> 800F7C68
+    OMAP35XX-GP ES3.1, CPU-OPP2, L3-165MHz, Max CPU Clock 600 mHz
+    REPTAR Board + LPDDR/NAND
+    I2C:   ready
+    monitor len: 000EFC68
+    ramsize: 10000000
+    TLB table at: 8fff0000
+    Top of RAM usable for U-Boot at: 8fff0000
+    Reserving 959k for U-Boot at: 8ff00000
+    Reserving 136k for malloc() at: 8fede000
+    Reserving 32 Bytes for Board Info at: 8feddfe0
+    Reserving 128 Bytes for Global Data at: 8feddf60
+    New Stack Pointer is: 8feddf50
+    RAM Configuration:
+    Bank #0: 80000000 256 MiB
+    Bank #1: 90000000 0 Bytes
+    relocation Offset is: 0fef8000
+    WARNING: Caches not enabled
+    monitor flash len: 00066970
+    Now running in RAM - U-Boot at: 8ff00000
+    Flash: 16 KiB
+    Flash pflash NOR detected.
+    MMC:   OMAP SD/MMC: 0
+    In:    serial
+    Out:   serial
+    Err:   serial
+    fpga_init: CONFIG_FPGA = 0x1
+    Net:   smc911x-0
+    Warning: smc911x-0 MAC addresses don't match:
+    Address in SROM is         52:54:00:12:34:56
+    Address in environment is  e4:af:a1:40:01:fe
+    
+    Reptar # tftp miniapp_u-boot/miniapp_u-boot.bin
+    smc911x: detected LAN9118 controller
+    smc911x: phy initialized
+    smc911x: MAC e4:af:a1:40:01:fe
+    Using smc911x-0 device
+    TFTP from server 10.0.2.2; our IP address is 10.0.2.10
+    Filename 'miniapp_u-boot/miniapp_u-boot.bin'.
+    Load address: 0x81600000
+    Loading: #######
+    done
+    Bytes transferred = 35352 (8a18 hex)
+    Reptar # go 0x81600000
+    ## Starting application at 0x81600000 ...
+    Start of the Miniapp U-boot Standalone Application
+
+

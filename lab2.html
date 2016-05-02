@@ -853,6 +853,164 @@ Reptar # go 0x81600000
 </div>
 <div class="section" id="mini-application">
 <h2>7) Mini-application<a class="headerlink" href="#mini-application" title="Permalink to this headline">¶</a></h2>
+<p>The following program, uses the button to manage 3 counters that are displayed on the 7 segment displays. Button <strong>SW3</strong> enable to quit te application:</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="cp">#include &lt;common.h&gt;</span>
+<span class="cp">#include &lt;command.h&gt;</span>
+<span class="cp">#include &lt;asm/arch/mux.h&gt;</span>
+<span class="cp">#include &lt;asm/io.h&gt;</span>
+<span class="cp">#include &lt;asm/errno.h&gt;</span>
+<span class="cp">#include &quot;board/ti/reptar/reptar.h&quot;</span>
+
+<span class="cp">#define SW1 (1&lt;&lt;0)</span>
+<span class="cp">#define SW2 (1&lt;&lt;1)</span>
+<span class="cp">#define SW3 (1&lt;&lt;2)</span>
+<span class="cp">#define SW4 (1&lt;&lt;3)</span>
+<span class="cp">#define SW5 (1&lt;&lt;4)</span>
+
+<span class="k">extern</span> <span class="kt">int</span> <span class="nf">sevenseg_putc</span><span class="p">(</span><span class="kt">int</span> <span class="n">index</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">number</span><span class="p">);</span>
+
+<span class="kt">int</span> <span class="n">old_state</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="kt">int</span> <span class="n">new_state</span> <span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+
+<span class="kt">int</span> <span class="nf">buttons</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+<span class="kt">void</span> <span class="nf">sample</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+<span class="kt">void</span> <span class="nf">latch</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+<span class="kt">int</span> <span class="nf">is_rising</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">bit</span><span class="p">);</span>
+
+<span class="cp">#define handle_counter(i) \</span>
+<span class="cp">counters[i]++;\</span>
+<span class="cp">if(counters[i] &gt;= 10)\</span>
+<span class="cp">{\</span>
+<span class="cp">    counters[i] = 0;\</span>
+<span class="cp">}\</span>
+<span class="cp">sevenseg_putc(i, counters[i]);</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">argv</span><span class="p">[])</span>
+<span class="p">{</span>
+    <span class="kt">int</span> <span class="n">counters</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">};</span>
+
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Start of the Miniapp U-boot Standalone Application</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+
+    <span class="n">sevenseg_putc</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+    <span class="n">sevenseg_putc</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+    <span class="n">sevenseg_putc</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+
+    <span class="k">while</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="p">{</span>
+            <span class="c1">// Sample the button inputs</span>
+            <span class="n">sample</span><span class="p">();</span>
+
+            <span class="c1">// Modify internal state</span>
+            <span class="k">if</span><span class="p">(</span> <span class="n">is_falling</span><span class="p">(</span><span class="n">SW2</span><span class="p">))</span>
+                    <span class="n">handle_counter</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+            <span class="k">if</span><span class="p">(</span> <span class="n">is_falling</span><span class="p">(</span><span class="n">SW5</span><span class="p">))</span>
+                    <span class="n">handle_counter</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+            <span class="k">if</span><span class="p">(</span> <span class="n">is_falling</span><span class="p">(</span><span class="n">SW4</span><span class="p">))</span>
+                    <span class="n">handle_counter</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">is_falling</span><span class="p">(</span><span class="n">SW3</span><span class="p">))</span>
+                    <span class="k">break</span><span class="p">;</span>
+
+            <span class="c1">// Save input states</span>
+            <span class="n">latch</span><span class="p">();</span>
+    <span class="p">}</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Stop of the Miniapp U-boot Standalone Application</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">buttons</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">readw</span><span class="p">(</span><span class="n">SP6_PUSH_BUT</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">sample</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">new_state</span> <span class="o">=</span> <span class="n">buttons</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">latch</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">old_state</span> <span class="o">=</span> <span class="n">new_state</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">is_rising</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">bit</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">new_state</span> <span class="o">&amp;</span> <span class="n">bit</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="p">(</span><span class="n">old_state</span> <span class="o">&amp;</span> <span class="n">bit</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">is_falling</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">bit</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="o">!</span><span class="p">(</span><span class="n">new_state</span> <span class="o">&amp;</span> <span class="n">bit</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">old_state</span> <span class="o">&amp;</span> <span class="n">bit</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>To test the application simply run:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">redsuser@vm-reds-2015s2:~/seee_student$</span> cp miniapp_u-boot/miniapp_u-boot ~/tftpboot
+<span class="gp">redsuser@vm-reds-2015s2:~/seee_student$</span> ./stq
+<span class="go">libGL error: pci id for fd 12: 80ee:beef, driver (null)</span>
+<span class="go">libGL error: core dri or dri2 extension not found</span>
+<span class="go">libGL error: failed to load driver: vboxvideo</span>
+<span class="go">Running QEMU</span>
+<span class="go">sp6_class_init()</span>
+<span class="go">WARNING: Image format was not specified for &#39;filesystem/flash&#39; and probing guessed raw.</span>
+<span class="go">         Automatically detecting the format is dangerous for raw images, write operations on block 0 will be restricted.</span>
+<span class="go">         Specify the &#39;raw&#39; format explicitly to remove the restrictions.</span>
+<span class="go">WARNING: Image format was not specified for &#39;filesystem/sd-card.img&#39; and probing guessed raw.</span>
+<span class="go">         Automatically detecting the format is dangerous for raw images, write operations on block 0 will be restricted.</span>
+<span class="go">         Specify the &#39;raw&#39; format explicitly to remove the restrictions.</span>
+<span class="go">sysbus_create_simple()</span>
+<span class="go">sp6_initfn()</span>
+
+
+<span class="go">U-Boot 2011.09-00000-g9af6a15 (Feb 10 2015 - 16:10:59)</span>
+
+<span class="go">U-Boot code: 80008000 -&gt; 80065570  BSS: -&gt; 800F7C68</span>
+<span class="go">OMAP35XX-GP ES3.1, CPU-OPP2, L3-165MHz, Max CPU Clock 600 mHz</span>
+<span class="go">REPTAR Board + LPDDR/NAND</span>
+<span class="go">I2C:   ready</span>
+<span class="go">monitor len: 000EFC68</span>
+<span class="go">ramsize: 10000000</span>
+<span class="go">TLB table at: 8fff0000</span>
+<span class="go">Top of RAM usable for U-Boot at: 8fff0000</span>
+<span class="go">Reserving 959k for U-Boot at: 8ff00000</span>
+<span class="go">Reserving 136k for malloc() at: 8fede000</span>
+<span class="go">Reserving 32 Bytes for Board Info at: 8feddfe0</span>
+<span class="go">Reserving 128 Bytes for Global Data at: 8feddf60</span>
+<span class="go">New Stack Pointer is: 8feddf50</span>
+<span class="go">RAM Configuration:</span>
+<span class="go">Bank #0: 80000000 256 MiB</span>
+<span class="go">Bank #1: 90000000 0 Bytes</span>
+<span class="go">relocation Offset is: 0fef8000</span>
+<span class="go">WARNING: Caches not enabled</span>
+<span class="go">monitor flash len: 00066970</span>
+<span class="go">Now running in RAM - U-Boot at: 8ff00000</span>
+<span class="go">Flash: 16 KiB</span>
+<span class="go">Flash pflash NOR detected.</span>
+<span class="go">MMC:   OMAP SD/MMC: 0</span>
+<span class="go">In:    serial</span>
+<span class="go">Out:   serial</span>
+<span class="go">Err:   serial</span>
+<span class="go">fpga_init: CONFIG_FPGA = 0x1</span>
+<span class="go">Net:   smc911x-0</span>
+<span class="go">Warning: smc911x-0 MAC addresses don&#39;t match:</span>
+<span class="go">Address in SROM is         52:54:00:12:34:56</span>
+<span class="go">Address in environment is  e4:af:a1:40:01:fe</span>
+
+<span class="go">Reptar # tftp miniapp_u-boot/miniapp_u-boot.bin</span>
+<span class="go">smc911x: detected LAN9118 controller</span>
+<span class="go">smc911x: phy initialized</span>
+<span class="go">smc911x: MAC e4:af:a1:40:01:fe</span>
+<span class="go">Using smc911x-0 device</span>
+<span class="go">TFTP from server 10.0.2.2; our IP address is 10.0.2.10</span>
+<span class="go">Filename &#39;miniapp_u-boot/miniapp_u-boot.bin&#39;.</span>
+<span class="go">Load address: 0x81600000</span>
+<span class="go">Loading: #######</span>
+<span class="go">done</span>
+<span class="go">Bytes transferred = 35352 (8a18 hex)</span>
+<span class="go">Reptar # go 0x81600000</span>
+<span class="gp">#</span><span class="c"># Starting application at 0x81600000 ...</span>
+<span class="go">Start of the Miniapp U-boot Standalone Application</span>
+</pre></div>
+</div>
 </div>
 </div>
 
