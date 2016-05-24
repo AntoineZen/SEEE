@@ -83,15 +83,16 @@
             
                 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="">REPTAR Introduction</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#environment-setup">1) Environment setup</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#qemu-startup">2) QEMU startup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#environment-setup">Environment setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#qemu-startup">QEMU startup</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#u-boot-test">3) U-Boot test</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#linux-test">4) Linux test</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#test-on-real-platform">5) Test on real platform</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#reptar-periferal-access">6) REPTAR periferal access</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#test-on-real-platform">Test on real platform</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#reptar-periferal-access">REPTAR periferal access</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="lab2.html">Periferal Emulations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lab3.html">Drivers</a></li>
 </ul>
 
             
@@ -140,7 +141,7 @@
 <h1>REPTAR Introduction<a class="headerlink" href="#reptar-introduction" title="Permalink to this headline">¶</a></h1>
 <p>This part has the goal to setup and to make a first contact with the environment used for the SEEE hand-on work (laboratory).</p>
 <div class="section" id="environment-setup">
-<h2>1) Environment setup<a class="headerlink" href="#environment-setup" title="Permalink to this headline">¶</a></h2>
+<h2>Environment setup<a class="headerlink" href="#environment-setup" title="Permalink to this headline">¶</a></h2>
 <p>The project files are provided as a tarball. The tarball was downloaded in the <cite>~/Downloads</cite> directory. We can exctract the repository with the following commands:</p>
 <blockquote>
 <div><a class="reference external" href="mailto:redsuser&#37;&#52;&#48;vm-reds-2015s2">redsuser<span>&#64;</span>vm-reds-2015s2</a>:~$ tar xf Downloads/seee_student.tar.gz
@@ -155,7 +156,7 @@ redsuser@vm-reds-2015s2:~/seee_student$ make qemu
 </div>
 </div>
 <div class="section" id="qemu-startup">
-<h2>2) QEMU startup<a class="headerlink" href="#qemu-startup" title="Permalink to this headline">¶</a></h2>
+<h2>QEMU startup<a class="headerlink" href="#qemu-startup" title="Permalink to this headline">¶</a></h2>
 <p>We can then run the Emulator direcly from Eclipse. For that select <em>Run -&gt; Debug Configuration</em>. Then select the <em>gemu-reds Debug</em> configuration and click <em>Debug</em>. A black Windows apears, this is the emulator windows.</p>
 <p>We can pause the Emulator exectution:</p>
 <blockquote>
@@ -667,7 +668,7 @@ argv[0] = ./helloworld
 </div></blockquote>
 </div>
 <div class="section" id="test-on-real-platform">
-<h2>5) Test on real platform<a class="headerlink" href="#test-on-real-platform" title="Permalink to this headline">¶</a></h2>
+<h2>Test on real platform<a class="headerlink" href="#test-on-real-platform" title="Permalink to this headline">¶</a></h2>
 <p>On this this step we will load the U-Boot helloworld program as we did in step 3, but this time on the REPTAR hardware. For this we need to connect the REPTAR to the host PC using Ethernet and USB. The USB connection is emulating a Serial port on the host PC. The Ethernet Interface on the PC also needs to be configured to have the IP <strong>192.168.1.1</strong> as the U-Boot on the Hardware is configured to download from this address. We need to open the serial port with an appropriate program:</p>
 <div class="highlight-python"><div class="highlight"><pre>$ sudo picocom -b 115200 /dev/ttyUSB0
 </pre></div>
@@ -684,7 +685,7 @@ argv[0] = ./helloworld
 <div>Reptar # go 0x81600000</div></blockquote>
 </div>
 <div class="section" id="reptar-periferal-access">
-<h2>6) REPTAR periferal access<a class="headerlink" href="#reptar-periferal-access" title="Permalink to this headline">¶</a></h2>
+<h2>REPTAR periferal access<a class="headerlink" href="#reptar-periferal-access" title="Permalink to this headline">¶</a></h2>
 <p>The following conde run from U-Boot and is able to read the button&#8217;s states and copy it to the LEDs:</p>
 <div class="highlight-c"><div class="highlight"><pre><span class="cp">#include &lt;common.h&gt;</span>
 <span class="cp">#include &lt;command.h&gt;</span>

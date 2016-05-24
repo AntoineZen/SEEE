@@ -31,6 +31,7 @@
 
   
     <link rel="top" title="SEEE 0.0 documentation" href="index.html"/>
+        <link rel="next" title="Drivers" href="lab3.html"/>
         <link rel="prev" title="REPTAR Introduction" href="lab1.html"/> 
 
   
@@ -83,15 +84,16 @@
                 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="lab1.html">REPTAR Introduction</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="">Periferal Emulations</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#qemu-environment-and-repatar-machine">1) QEMU environment and repatar machine</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#spartan-6-fpga-emulation">2) Spartan 6 FPGA Emulation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#led-devices-emulation">3) LED devices emulation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#button-emulation">4) Button emulation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#irq-managment-with-buttons">5) IRQ managment with buttons</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#segment-display-emulation">6) 7 segment display emulation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#mini-application">7) Mini-application</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#qemu-environment-and-repatar-machine">QEMU environment and repatar machine</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#spartan-6-fpga-emulation">Spartan 6 FPGA Emulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#led-devices-emulation">LED devices emulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#button-emulation">Button emulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#irq-managment-with-buttons">IRQ managment with buttons</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#segment-display-emulation">7 segment display emulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#mini-application">Mini-application</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="lab3.html">Drivers</a></li>
 </ul>
 
             
@@ -140,7 +142,7 @@
 <h1>Periferal Emulations<a class="headerlink" href="#periferal-emulations" title="Permalink to this headline">¶</a></h1>
 <p>In this lab, we study how to intergrate new perfiferal into the QEMU emulator. We will register a new periferal that emulate part of the FPGA that is present on the readl Reptar hardware.</p>
 <div class="section" id="qemu-environment-and-repatar-machine">
-<h2>1) QEMU environment and repatar machine<a class="headerlink" href="#qemu-environment-and-repatar-machine" title="Permalink to this headline">¶</a></h2>
+<h2>QEMU environment and repatar machine<a class="headerlink" href="#qemu-environment-and-repatar-machine" title="Permalink to this headline">¶</a></h2>
 <p>This part is an handover of the QEMU envionment provided for the lab. First part try to run the <em>qtemu</em> witch is the frontend to the QEMU and reptar emulation. To start <em>QEMU</em> and the <em>qtemu</em> togeter, we can can run the <code class="docutils literal"><span class="pre">stq</span></code> script:</p>
 <div class="highlight-python"><div class="highlight"><pre>redsuser@vm-reds-2015s2:~/seee_student$ ./stq
 libGL error: pci id for fd 12: 80ee:beef, driver (null)
@@ -212,7 +214,7 @@ make[1]: Leaving directory `/home/redsuser/seee_student/qemu-reds&#39;
 </div>
 </div>
 <div class="section" id="spartan-6-fpga-emulation">
-<h2>2) Spartan 6 FPGA Emulation<a class="headerlink" href="#spartan-6-fpga-emulation" title="Permalink to this headline">¶</a></h2>
+<h2>Spartan 6 FPGA Emulation<a class="headerlink" href="#spartan-6-fpga-emulation" title="Permalink to this headline">¶</a></h2>
 <p>In this part, we will implement the Spartan 6 FPGA handler in QEMU. We will map its physical address space (but still emulated) to callback functions. There will be a callback for the read and one for the write.</p>
 <p>The program flow is the following:</p>
 <blockquote>
@@ -350,7 +352,7 @@ U-Boot 2011.09-00000-g9af6a15 (Feb 10 2015 - 16:10:59)
 <p>We see the output of the <code class="docutils literal"><span class="pre">printf()</span></code> stament implemented in the <code class="docutils literal"><span class="pre">sp6_write()</span></code> callback.</p>
 </div>
 <div class="section" id="led-devices-emulation">
-<h2>3) LED devices emulation<a class="headerlink" href="#led-devices-emulation" title="Permalink to this headline">¶</a></h2>
+<h2>LED devices emulation<a class="headerlink" href="#led-devices-emulation" title="Permalink to this headline">¶</a></h2>
 <p>Once the Spartan 6 periferal is created and reachable from the emulated CPU, we need to implement the periferal behavior. The first part will be the LED output. The LEDS are driven by a single register. Each bit represent a LED. The offset for this register is <strong>0x003a</strong>.</p>
 <p>To emulate the registers, we create a data structre as following:</p>
 <div class="highlight-c"><div class="highlight"><pre><span class="k">typedef</span> <span class="k">struct</span>
@@ -459,7 +461,7 @@ reptar-sp6-emul: sp6_emul_cmd_post ...done
 </div></blockquote>
 </div>
 <div class="section" id="button-emulation">
-<h2>4) Button emulation<a class="headerlink" href="#button-emulation" title="Permalink to this headline">¶</a></h2>
+<h2>Button emulation<a class="headerlink" href="#button-emulation" title="Permalink to this headline">¶</a></h2>
 <p>In this part, we are required to make the button availabe to the software. For this, a call back will modify the register values. This callback is already provided in the file <code class="docutils literal"><span class="pre">reptar_sp6_button.c</span></code> and is called <code class="docutils literal"><span class="pre">reptar_sp6_btns_event_process()</span></code>.</p>
 <p>We will need to make the register acessible to functions in <code class="docutils literal"><span class="pre">reptar_sp6_button.c</span></code>. For this we modified the structre provided in <code class="docutils literal"><span class="pre">repstar_sp6.h</span></code> to add it the register strucure:</p>
 <div class="highlight-c"><div class="highlight"><pre><span class="cm">/**</span>
@@ -579,7 +581,7 @@ reptar-sp6-emul: sp6_emul_cmd_post ...done
 </div>
 </div>
 <div class="section" id="irq-managment-with-buttons">
-<h2>5) IRQ managment with buttons<a class="headerlink" href="#irq-managment-with-buttons" title="Permalink to this headline">¶</a></h2>
+<h2>IRQ managment with buttons<a class="headerlink" href="#irq-managment-with-buttons" title="Permalink to this headline">¶</a></h2>
 <p>We will add the IRQ managment to the buttons. For this we need to tell the QUEM that our device have the ablitiy to make IRQ and request an IRQ number. For this we should add the following call to <code class="docutils literal"><span class="pre">sp6_initfn()</span></code>:</p>
 <div class="highlight-c"><div class="highlight"><pre><span class="k">static</span> <span class="kt">int</span> <span class="nf">sp6_initfn</span><span class="p">(</span><span class="n">SysBusDevice</span> <span class="o">*</span><span class="n">dev</span><span class="p">)</span>
 <span class="p">{</span>
@@ -730,7 +732,7 @@ Reptar # md.l 0x48310018 1
 </div>
 </div>
 <div class="section" id="segment-display-emulation">
-<h2>6) 7 segment display emulation<a class="headerlink" href="#segment-display-emulation" title="Permalink to this headline">¶</a></h2>
+<h2>7 segment display emulation<a class="headerlink" href="#segment-display-emulation" title="Permalink to this headline">¶</a></h2>
 <p>This section is about adding the emulation of the 7 segment perfieral. Thery are 3 &#8220;Seven Segment&#8221; display connected to the FPGA. They are at address offset from 0x0030 to 0x0034 (each 16 bits). First we have to implement the register that will control the 7 segment. This goes in the same way that for the LEDs in part 3. The code is added is give here after:</p>
 <div class="highlight-c"><div class="highlight"><pre><span class="c1">//... (code removed)</span>
 <span class="cp">#define DISP_7SEG1_REG      0x0030</span>
@@ -852,7 +854,7 @@ Reptar # go 0x81600000
 <p>We can then observe the number on the 3 seven segment display changing in the frond-end !</p>
 </div>
 <div class="section" id="mini-application">
-<h2>7) Mini-application<a class="headerlink" href="#mini-application" title="Permalink to this headline">¶</a></h2>
+<h2>Mini-application<a class="headerlink" href="#mini-application" title="Permalink to this headline">¶</a></h2>
 <p>The following program, uses the button to manage 3 counters that are displayed on the 7 segment displays. Button <strong>SW3</strong> enable to quit te application:</p>
 <div class="highlight-c"><div class="highlight"><pre><span class="cp">#include &lt;common.h&gt;</span>
 <span class="cp">#include &lt;command.h&gt;</span>
@@ -1020,6 +1022,8 @@ Reptar # go 0x81600000
           <footer>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="lab3.html" class="btn btn-neutral float-right" title="Drivers" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="lab1.html" class="btn btn-neutral" title="REPTAR Introduction" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>

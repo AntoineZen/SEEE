@@ -1,0 +1,639 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Drivers &mdash; SEEE 0.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="SEEE 0.0 documentation" href="index.html"/>
+        <link rel="prev" title="Periferal Emulations" href="lab2.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> SEEE
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="lab1.html">REPTAR Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lab2.html">Periferal Emulations</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Drivers</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#qemu-environment-and-reptar-platform">QEMU Environment and REPTAR platform</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#character-driver">Character driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#leds-driver">LEDs Driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#button-driver">Button driver</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">SEEE</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Drivers</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/lab3.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="drivers">
+<h1>Drivers<a class="headerlink" href="#drivers" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="qemu-environment-and-reptar-platform">
+<h2>QEMU Environment and REPTAR platform<a class="headerlink" href="#qemu-environment-and-reptar-platform" title="Permalink to this headline">¶</a></h2>
+<p>In this section, we will deploy the environment from the MMC cart and we will experiment dynamic module loading. For this we will use the <strong>drivers</strong> project provided in <code class="docutils literal"><span class="pre">~/seee_studend/drivers</span></code>. First, we can compile the project:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">redsuser@vm-reds-2015s2:~$</span> <span class="nb">cd </span>seee_student/drivers/
+<span class="gp">redsuser@vm-reds-2015s2:~/seee_student/drivers$</span> make
+<span class="go">make -C ../linux-3.0-reptar M=/home/redsuser/seee_student/drivers ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf-</span>
+<span class="go">make[1]: Entering directory `/home/redsuser/seee_student/linux-3.0-reptar&#39;</span>
+<span class="go">  LD      /home/redsuser/seee_student/drivers/built-in.o</span>
+<span class="go">  CC [M]  /home/redsuser/seee_student/drivers/reptar_sp6.o</span>
+<span class="go">/home/redsuser/seee_student/drivers/reptar_sp6.c:96:13: warning: &#39;bitstream_version&#39; defined but not used [-Wunused-variable]</span>
+<span class="go">/home/redsuser/seee_student/drivers/reptar_sp6.c: In function &#39;fpga_write&#39;:</span>
+<span class="go">/home/redsuser/seee_student/drivers/reptar_sp6.c:115:1: warning: control reaches end of non-void function [-Wreturn-type]</span>
+<span class="go">/home/redsuser/seee_student/drivers/reptar_sp6.c: In function &#39;fpga_read&#39;:</span>
+<span class="go">/home/redsuser/seee_student/drivers/reptar_sp6.c:110:1: warning: control reaches end of non-void function [-Wreturn-type]</span>
+<span class="go">  CC [M]  /home/redsuser/seee_student/drivers/reptar_sp6_leds.o</span>
+<span class="go">/home/redsuser/seee_student/drivers/reptar_sp6_leds.c: In function &#39;reptar_sp6_led_set&#39;:</span>
+<span class="go">/home/redsuser/seee_student/drivers/reptar_sp6_leds.c:43:34: warning: unused variable &#39;pd&#39; [-Wunused-variable]</span>
+<span class="go">/home/redsuser/seee_student/drivers/reptar_sp6_leds.c: In function &#39;reptar_sp6_led_probe&#39;:</span>
+<span class="go">/home/redsuser/seee_student/drivers/reptar_sp6_leds.c:69:6: warning: unused variable &#39;ret&#39; [-Wunused-variable]</span>
+<span class="go">  CC [M]  /home/redsuser/seee_student/drivers/reptar_sp6_buttons.o</span>
+<span class="go">/home/redsuser/seee_student/drivers/reptar_sp6_buttons.c: In function &#39;reptar_sp6_buttons_irq&#39;:</span>
+<span class="go">/home/redsuser/seee_student/drivers/reptar_sp6_buttons.c:41:30: warning: unused variable &#39;dev&#39; [-Wunused-variable]</span>
+<span class="go">/home/redsuser/seee_student/drivers/reptar_sp6_buttons.c: At top level:</span>
+<span class="go">/home/redsuser/seee_student/drivers/reptar_sp6_buttons.c:39:20: warning: &#39;reptar_sp6_buttons_irq&#39; defined but not used [-Wunused-function]</span>
+<span class="go">/home/redsuser/seee_student/drivers/reptar_sp6_buttons.c:49:20: warning: &#39;reptar_sp6_buttons_irq_thread&#39; defined but not used [-Wunused-function]</span>
+<span class="go">  LD [M]  /home/redsuser/seee_student/drivers/sp6.o</span>
+<span class="go">  Building modules, stage 2.</span>
+<span class="go">  MODPOST 1 modules</span>
+<span class="go">  CC      /home/redsuser/seee_student/drivers/sp6.mod.o</span>
+<span class="go">  LD [M]  /home/redsuser/seee_student/drivers/sp6.ko</span>
+<span class="go">make[1]: Leaving directory `/home/redsuser/seee_student/linux-3.0-reptar&#39;</span>
+<span class="go">arm-linux-gnueabihf-gcc -marm -I../linux-3.0-reptar -static buttons_test.c -o buttons_test</span>
+<span class="go">arm-linux-gnueabihf-gcc     usertest.c   -o usertest</span>
+</pre></div>
+</div>
+<p>We can then deplay the compiled files to the root file-system of the emulated system using the provided srcipt:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">redsuser@vm-reds-2015s2:~/seee_student/drivers$</span> <span class="nb">cd</span> ..
+<span class="gp">redsuser@vm-reds-2015s2:~/seee_student$</span> ./deploy
+<span class="go">Deploying into reptar rootfs ...</span>
+<span class="go">Mounting filesystem/sd-card.img...</span>
+<span class="go">[sudo] password for redsuser:</span>
+<span class="go">SD card partitions mounted in &#39;boot_tmp&#39; and &#39;filesystem_tmp&#39; directories</span>
+<span class="go">Unmounting SD card image...</span>
+<span class="go">  Synchronizing .img file</span>
+<span class="go">  Unmounting &#39;boot_tmp&#39; and &#39;filesystem_tmp&#39;...</span>
+<span class="go">Done !</span>
+</pre></div>
+</div>
+<p>This srcipt mount the MMC card image, copy the file to it and unmount it. As our code (driver + app) is deployed, we can test it. For this we will start the emulator then GNU/Linux inside the emulator:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">redsuser@vm-reds-2015s2:~/seee_student$</span> ./stf
+<span class="go">sp6_class_init()</span>
+<span class="go">WARNING: Image format was not specified for &#39;filesystem/flash&#39; and probing guessed raw.</span>
+<span class="go">         Automatically detecting the format is dangerous for raw images, write operations on block 0 will be restricted.</span>
+<span class="go">         Specify the &#39;raw&#39; format explicitly to remove the restrictions.</span>
+<span class="go">WARNING: Image format was not specified for &#39;filesystem/sd-card.img&#39; and probing guessed raw.</span>
+<span class="go">         Automatically detecting the format is dangerous for raw images, write operations on block 0 will be restricted.</span>
+<span class="go">         Specify the &#39;raw&#39; format explicitly to remove the restrictions.</span>
+<span class="go">sysbus_create_simple()</span>
+<span class="go">sp6_initfn()</span>
+<span class="go">sp6_emul_init: failed to connect to SP6 server</span>
+<span class="go">sp6_emul_init: terminate thread</span>
+
+
+<span class="go">U-Boot 2011.09-00000-g9af6a15 (Feb 10 2015 - 16:10:59)</span>
+
+<span class="go">U-Boot code: 80008000 -&gt; 80065570  BSS: -&gt; 800F7C68</span>
+<span class="go">OMAP35XX-GP ES3.1, CPU-OPP2, L3-165MHz, Max CPU Clock 600 mHz</span>
+<span class="go">REPTAR Board + LPDDR/NAND</span>
+<span class="go">.....</span>
+<span class="go">Address in environment is  e4:af:a1:40:01:fe</span>
+
+<span class="go">Reptar # boot</span>
+<span class="go">reading uImage</span>
+
+<span class="go">3051480 bytes read</span>
+<span class="gp">#</span><span class="c"># Booting kernel from Legacy Image at 81600000 ...</span>
+<span class="go">   Image Name:   Linux-3.0.12-reptar</span>
+<span class="go">   Image Type:   ARM Linux Kernel Image (uncompressed)</span>
+<span class="go">   Data Size:    3051416 Bytes = 2.9 MiB</span>
+<span class="go">   Load Address: 80008000</span>
+<span class="go">   Entry Point:  80008000</span>
+<span class="go">   Verifying Checksum ... OK</span>
+<span class="go">   Loading Kernel Image ... OK</span>
+<span class="go">OK</span>
+<span class="go">Using machid 0x2694</span>
+
+<span class="go">Starting kernel ...</span>
+
+<span class="go">......</span>
+
+<span class="go">*** Welcome on REPTAR (HEIG-VD/REDS): use root/root to log in ***</span>
+<span class="go">reptar login:</span>
+</pre></div>
+</div>
+<p>Once the GNU/Linux operating system is started, we can test to load &amp; unload the compiled kernel module:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">*** Welcome on REPTAR (HEIG-VD/REDS): use root/root to log in ***</span>
+<span class="go">reptar login: root</span>
+<span class="go">Password:</span>
+<span class="gp">#</span> <span class="nb">pwd</span>
+<span class="go">/root</span>
+<span class="gp">#</span> <span class="nb">cd</span> /
+
+<span class="gp">#</span> ls
+<span class="go">bin           home          lost+found    proc          sp6.ko        usr</span>
+<span class="go">buttons_test  ledstest.sh   media         root          sys           var</span>
+<span class="go">dev           lib           mnt           run           tmp</span>
+<span class="go">etc           linuxrc       opt           sbin          usertest</span>
+<span class="gp">#</span> insmod sp6.ko
+<span class="go">reptar_sp6: module starting...</span>
+<span class="go">Probing FPGA driver (device: fpga)</span>
+<span class="go">input: reptar_sp6_buttons as /devices/platform/fpga/reptar_sp6_buttons/input/input1</span>
+<span class="go">reptar_sp6: done.</span>
+<span class="gp">#</span> lsmod
+<span class="go">Module                  Size  Used by    Not tainted</span>
+<span class="go">sp6                     4606  0</span>
+<span class="gp">#</span> rmmod sp6
+<span class="go">reptar_sp6: bye bye!</span>
+<span class="gp">#</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="character-driver">
+<h2>Character driver<a class="headerlink" href="#character-driver" title="Permalink to this headline">¶</a></h2>
+<p>In this section we will implement the <code class="docutils literal"><span class="pre">read()</span></code> and <code class="docutils literal"><span class="pre">write()</span></code> callback inside the kernel module to enable to access and modify the content of a static buffer owned by the kernel module. The function are implemented this way:</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="kt">ssize_t</span> <span class="nf">fpga_read</span><span class="p">(</span><span class="k">struct</span> <span class="n">file</span> <span class="o">*</span><span class="n">filp</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">buffer</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">length</span><span class="p">,</span> <span class="kt">loff_t</span> <span class="o">*</span><span class="n">offset</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">printk</span><span class="p">(</span><span class="s">&quot;read(len=%d, offset=%d)</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="o">*</span><span class="n">offset</span><span class="p">);</span>
+  <span class="c1">// if offset is not zero, we have readen everithing, return that there is zero byte to read</span>
+  <span class="k">if</span> <span class="p">(</span><span class="o">*</span><span class="n">offset</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+
+  <span class="c1">// Trip the size</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">length</span> <span class="o">&gt;</span> <span class="n">strlen</span><span class="p">(</span><span class="n">bitstream_version</span><span class="p">))</span>
+  <span class="p">{</span>
+      <span class="n">length</span> <span class="o">=</span> <span class="n">strlen</span><span class="p">(</span><span class="n">bitstream_version</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="c1">// Avoid overflows</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">length</span> <span class="o">&gt;</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">bitstream_version</span><span class="p">))</span>
+  <span class="p">{</span>
+    <span class="n">length</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">bitstream_version</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="c1">// Copy to the userspace</span>
+  <span class="k">if</span><span class="p">(</span><span class="n">copy_to_user</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="n">bitstream_version</span><span class="p">,</span> <span class="n">length</span><span class="p">))</span>
+  <span class="p">{</span>
+    <span class="n">printk</span><span class="p">(</span><span class="s">&quot;copy_to_user failed!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+    <span class="k">return</span> <span class="o">-</span><span class="n">EFAULT</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="k">return</span> <span class="n">length</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">ssize_t</span> <span class="nf">fpga_write</span><span class="p">(</span><span class="k">struct</span> <span class="n">file</span> <span class="o">*</span><span class="n">filp</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">buff</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">len</span><span class="p">,</span> <span class="kt">loff_t</span> <span class="o">*</span><span class="n">off</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="c1">// Avoid overflows</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">len</span> <span class="o">&gt;</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">bitstream_version</span><span class="p">))</span>
+  <span class="p">{</span>
+      <span class="n">len</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">bitstream_version</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="n">printk</span><span class="p">(</span><span class="s">&quot;compying %d bytes</span><span class="se">\n</span><span class="s">       &quot;</span><span class="p">,</span> <span class="n">len</span><span class="p">);</span>
+  <span class="k">if</span><span class="p">(</span><span class="n">copy_from_user</span><span class="p">(</span><span class="n">bitstream_version</span><span class="p">,</span> <span class="n">buff</span><span class="p">,</span> <span class="n">len</span><span class="p">))</span>
+    <span class="k">return</span> <span class="o">-</span><span class="n">EFAULT</span><span class="p">;</span>
+
+  <span class="k">return</span> <span class="n">len</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">struct</span> <span class="n">file_operations</span> <span class="n">fpga_fops</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="p">.</span><span class="n">read</span> <span class="o">=</span> <span class="n">fpga_read</span><span class="p">,</span>
+  <span class="p">.</span><span class="n">write</span> <span class="o">=</span> <span class="n">fpga_write</span><span class="p">,</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>The node file that serve a driver entry point is generated by the following instruction:</p>
+<p>The device name will then be <strong>/dev/sp6</strong>. This is the file we will open for reading and wirting.</p>
+<p>We can then write a user space application that can write this buffer using the provided character based interface:</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="cp">#include &lt;stdlib.h&gt;</span>
+<span class="cp">#include &lt;stdio.h&gt;</span>
+<span class="cp">#include &lt;string.h&gt;</span>
+<span class="cp">#include &lt;sys/types.h&gt;</span>
+<span class="cp">#include &lt;sys/stat.h&gt;</span>
+<span class="cp">#include &lt;sys/fcntl.h&gt;</span>
+
+<span class="kt">char</span> <span class="n">buffer</span><span class="p">[</span><span class="mi">80</span><span class="p">];</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">int</span> <span class="n">ret</span><span class="p">;</span>
+
+    <span class="kt">int</span> <span class="n">f</span> <span class="o">=</span> <span class="n">open</span><span class="p">(</span><span class="s">&quot;/dev/sp6&quot;</span><span class="p">,</span> <span class="n">O_RDWR</span><span class="p">);</span>
+
+    <span class="c1">// Read initial value</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="n">read</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buffer</span><span class="p">));</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Read </span><span class="se">\&quot;</span><span class="s">%s</span><span class="se">\&quot;</span><span class="s"> (%d bytes)</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="n">ret</span><span class="p">);</span>
+
+    <span class="c1">// modify the kernel value</span>
+    <span class="n">lseek</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">SEEK_SET</span><span class="p">);</span>
+    <span class="n">sprintf</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="s">&quot;Hello kernel!&quot;</span><span class="p">);</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="n">write</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="n">strlen</span><span class="p">(</span><span class="n">buffer</span><span class="p">));</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Write </span><span class="se">\&quot;</span><span class="s">%s</span><span class="se">\&quot;</span><span class="s"> (%d bytes)</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="n">ret</span><span class="p">);</span>
+
+    <span class="c1">// Read modified value</span>
+    <span class="n">lseek</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">SEEK_SET</span><span class="p">);</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="n">read</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buffer</span><span class="p">));</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Read </span><span class="se">\&quot;</span><span class="s">%s</span><span class="se">\&quot;</span><span class="s"> (%d bytes)</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="n">ret</span><span class="p">);</span>
+
+    <span class="n">close</span><span class="p">(</span><span class="n">f</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>This code first read the buffer, then modify it, and read it again to see the modifications.</p>
+<p>We can install the kernel module and then test the user application:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">#</span> insmod /sp6.ko
+<span class="go">reptar_sp6: module starting...</span>
+<span class="go">Probing FPGA driver (device: fpga)</span>
+<span class="go">input: reptar_sp6_buttons as /devices/platform/fpga/reptar_sp6_buttons/input/input1</span>
+<span class="go">reptar_sp6: done.</span>
+<span class="gp">#</span> /usertest
+<span class="go">read(len=80, offset=0)</span>
+<span class="go">Read &quot;FPGA bitstream VERSION&quot; (22 bytes)</span>
+<span class="go">compying 13 bytes</span>
+<span class="go">    Write &quot;Hello kernel!&quot; (13 bytes)</span>
+<span class="go">read(len=80, offset=0)</span>
+<span class="go">Read &quot;Hello kernel!m VERSION&quot; (22 bytes)</span>
+<span class="gp">#</span>
+</pre></div>
+</div>
+<p>We can alos see which major and minor number have been given to our driver by looking at the file attribute of the device file <code class="docutils literal"><span class="pre">/dev/sp6</span></code>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">#</span> ls -l /dev/sp6
+<span class="go">crw-rw----    1 root     root      252,   0 May  3 17:23 /dev/sp6</span>
+</pre></div>
+</div>
+<p>The numbers after the owner &amp; group are the major and minor mumbers, so for our device the <strong>major number is 252</strong> and the <strong>minor number is 0</strong>. Those number where generated by the <code class="docutils literal"><span class="pre">alloc_chrdev_region()</span></code> call in the <code class="docutils literal"><span class="pre">fpga_probe()</span></code> function:</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="k">static</span> <span class="kt">int</span> <span class="nf">fpga_probe</span><span class="p">(</span><span class="k">struct</span> <span class="n">platform_device</span> <span class="o">*</span><span class="n">pdev</span><span class="p">)</span> <span class="p">{</span>
+  <span class="p">...</span>
+  <span class="n">ret</span> <span class="o">=</span> <span class="n">alloc_chrdev_region</span><span class="p">(</span><span class="o">&amp;</span><span class="n">pdev</span><span class="o">-&gt;</span><span class="n">dev</span><span class="p">.</span><span class="n">devt</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&quot;fpga&quot;</span><span class="p">);</span>
+
+  <span class="p">...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="leds-driver">
+<h2>LEDs Driver<a class="headerlink" href="#leds-driver" title="Permalink to this headline">¶</a></h2>
+<p>In this part, we will add the LED driver functionality to our driver. For this, we first need to map the LEDS register to our driver address space. This is done using <code class="docutils literal"><span class="pre">ioremap()</span></code> from the probe function. We must also create a new driver of the class &#8220;LED&#8221;:</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="k">static</span> <span class="kt">int</span> <span class="nf">reptar_sp6_led_probe</span><span class="p">(</span><span class="k">struct</span> <span class="n">platform_device</span> <span class="o">*</span><span class="n">pdev</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="n">reptar_sp6_led_platdata</span> <span class="o">*</span><span class="n">pdata</span> <span class="o">=</span> <span class="n">pdev</span><span class="o">-&gt;</span><span class="n">dev</span><span class="p">.</span><span class="n">platform_data</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">reptar_sp6_led</span> <span class="o">*</span><span class="n">led</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">platform_device</span> <span class="o">*</span><span class="n">fpga_pdev</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">resource</span> <span class="o">*</span><span class="n">fpga_resource</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">ret</span><span class="p">;</span>
+
+
+    <span class="p">....</span>
+
+    <span class="cm">/* Map the LED register */</span>
+    <span class="n">led</span><span class="o">-&gt;</span><span class="n">reg</span> <span class="o">=</span> <span class="n">ioremap</span><span class="p">(</span><span class="n">FPGA_BASE</span> <span class="o">+</span> <span class="n">LED_OFFSET</span><span class="p">,</span> <span class="mi">4</span><span class="p">);</span>
+
+    <span class="cm">/* Register our new led device into led class */</span>
+
+    <span class="n">printk</span><span class="p">(</span><span class="s">&quot;Alocating the LEDs</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="n">led_classdev_register</span><span class="p">(</span><span class="n">pdev</span><span class="o">-&gt;</span><span class="n">dev</span><span class="p">.</span><span class="n">parent</span><span class="p">,</span> <span class="o">&amp;</span><span class="p">(</span><span class="n">pdev_to_sp6_led</span><span class="p">(</span><span class="n">pdev</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">cdev</span><span class="p">));</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">ret</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">dev_err</span><span class="p">(</span><span class="o">&amp;</span><span class="n">pdev</span><span class="o">-&gt;</span><span class="n">dev</span><span class="p">,</span> <span class="s">&quot;can&#39;t allocate led driver</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+      <span class="k">return</span> <span class="o">-</span><span class="n">ENOENT</span><span class="p">;</span>
+    <span class="p">}</span>
+
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>It is alos a good practice to reserve the I/O memory using <code class="docutils literal"><span class="pre">request_mem_region()</span></code> and to release it with <code class="docutils literal"><span class="pre">release_mem_region()</span></code>:</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="kt">int</span> <span class="n">__init</span> <span class="nf">reptar_sp6_leds_init</span><span class="p">(</span><span class="k">struct</span> <span class="n">platform_device</span> <span class="o">*</span><span class="n">parent_fpga</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
+
+    <span class="n">request_mem_region</span><span class="p">(</span><span class="n">FPGA_BASE</span> <span class="o">+</span> <span class="n">LED_OFFSET</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="s">&quot;sp6_leds&quot;</span><span class="p">);</span>
+
+    <span class="p">...</span> <span class="c1">// Rest of function</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="n">__exit</span> <span class="nf">reptar_sp6_leds_exit</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
+
+    <span class="p">...</span> <span class="c1">// Rest of function</span>
+
+    <span class="n">release_mem_region</span><span class="p">(</span><span class="n">FPGA_BASE</span> <span class="o">+</span> <span class="n">LED_OFFSET</span><span class="p">,</span> <span class="mi">4</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="button-driver">
+<h2>Button driver<a class="headerlink" href="#button-driver" title="Permalink to this headline">¶</a></h2>
+<p>In this task, we will implement the button driver using the IRQ. The interrupt to map is the vector <strong>10</strong> as seen in the previous lab.  this can be done from the module probe function as following:</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="k">static</span> <span class="kt">int</span> <span class="nf">reptar_sp6_buttons_probe</span><span class="p">(</span><span class="k">struct</span> <span class="n">platform_device</span> <span class="o">*</span><span class="n">pdev</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="n">reptar_sp6_buttons_platdata</span> <span class="o">*</span><span class="n">pdata</span> <span class="o">=</span> <span class="n">pdev</span><span class="o">-&gt;</span><span class="n">dev</span><span class="p">.</span><span class="n">platform_data</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">reptar_sp6_buttons</span> <span class="o">*</span><span class="n">btns</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">input_dev</span> <span class="o">*</span><span class="n">input</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">platform_device</span> <span class="o">*</span><span class="n">fpga_pdev</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">resource</span> <span class="o">*</span><span class="n">res</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">ret</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">gpio</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
+
+    <span class="c1">//... more code</span>
+
+    <span class="cm">/* Register 2 interrupt handlers (top, bottom) */</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="n">request_threaded_irq</span><span class="p">(</span> <span class="n">btns</span><span class="o">-&gt;</span><span class="n">irq</span><span class="p">,</span>
+                                <span class="n">reptar_sp6_buttons_irq</span><span class="p">,</span>
+                                <span class="n">reptar_sp6_buttons_irq_thread</span><span class="p">,</span>
+                                <span class="n">IRQF_TRIGGER_RISING</span><span class="p">,</span>
+                                <span class="s">&quot;sp6_buttons&quot;</span><span class="p">,</span>
+                                <span class="n">btns</span><span class="p">);</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">ret</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">dev_err</span><span class="p">(</span><span class="o">&amp;</span><span class="n">pdev</span><span class="o">-&gt;</span><span class="n">dev</span><span class="p">,</span> <span class="s">&quot;Failed request IRQ</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+                  <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="c1">// Enable IRQ at FPGA level</span>
+    <span class="o">*</span><span class="p">(</span><span class="n">btns</span><span class="o">-&gt;</span><span class="n">irq_reg</span><span class="p">)</span> <span class="o">|=</span> <span class="mh">0x0080</span><span class="p">;</span>
+    <span class="c1">//printk(&quot;IRQ_CTR_REG = 0x%04x\n&quot;, *(btns-&gt;irq_reg));</span>
+
+    <span class="n">platform_set_drvdata</span><span class="p">(</span><span class="n">pdev</span><span class="p">,</span> <span class="n">btns</span><span class="p">);</span>
+
+    <span class="cm">/* Registration as input device */</span>
+
+    <span class="c1">// ...</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><strong>Note</strong> that we also need to enable the interrupt at FPGA level. This is done by the <code class="docutils literal"><span class="pre">*(btns-&gt;irq_reg)</span> <span class="pre">|=</span> <span class="pre">0x0080</span></code> instruction!</p>
+<p>We need then to get the button number and clear the IRQ from the imediate IRQ handler call-back (not from the thread):</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="k">static</span> <span class="kt">irqreturn_t</span> <span class="nf">reptar_sp6_buttons_irq</span><span class="p">(</span><span class="kt">int</span> <span class="n">irq</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">dev_id</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">struct</span> <span class="n">reptar_sp6_buttons</span> <span class="o">*</span><span class="n">dev</span> <span class="o">=</span> <span class="n">dev_id</span><span class="p">;</span>
+
+
+
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">dev</span><span class="o">-&gt;</span><span class="n">irq_reg</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0x10</span><span class="p">))</span>
+    <span class="p">{</span>
+      <span class="n">printk</span><span class="p">(</span><span class="s">&quot;Button IRQ triggered &amp; IRQ_STATUS not set!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+    <span class="p">}</span>
+
+  <span class="cm">/* take the button number from the IRQ CTRL reg */</span>
+  <span class="n">dev</span><span class="o">-&gt;</span><span class="n">current_button</span> <span class="o">=</span> <span class="o">*</span><span class="p">(</span><span class="n">dev</span><span class="o">-&gt;</span><span class="n">btns_reg</span><span class="p">);</span>
+
+  <span class="cm">/* Clear the IRQ   (clear bit is the last bit)*/</span>
+  <span class="o">*</span><span class="p">(</span><span class="n">dev</span><span class="o">-&gt;</span><span class="n">irq_reg</span><span class="p">)</span> <span class="o">|=</span> <span class="mi">1</span><span class="p">;</span>
+
+  <span class="c1">//printk(&quot;reptar_sp6_buttons_irq(%d)\n&quot;, dev-&gt;current_button);</span>
+
+  <span class="k">return</span> <span class="n">IRQ_WAKE_THREAD</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>We can then the module using the povided utility:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">#</span> insmod /sp6.ko
+<span class="go">reptar_sp6: module starting...</span>
+<span class="go">[DOM-0] &lt;4&gt;Probing FPGA driver (device: fpga)</span>
+<span class="go">[DOM-0] &lt;7&gt;Registered led device: sp6_led0</span>
+<span class="go">[DOM-0] &lt;7&gt;Registered led device: sp6_led1</span>
+<span class="go">[DOM-0] &lt;7&gt;Registered led device: sp6_led2</span>
+<span class="go">[DOM-0] &lt;7&gt;Registered led device: sp6_led3</span>
+<span class="go">[DOM-0] &lt;7&gt;Registered led device: sp6_led4</span>
+<span class="go">[DOM-0] &lt;7&gt;Registered led device: sp6_led5</span>
+<span class="go">[DOM-0] &lt;4&gt;IRQ_CTR_REG = 0x0080</span>
+<span class="go">[DOM-0] &lt;6&gt;input: reptar_sp6_buttons as /devices/platform/fpga/reptar_sp6_buttons/input/input1</span>
+<span class="go">[DOM-0] &lt;4&gt;reptar_sp6: done.</span>
+<span class="gp">#</span> /buttons_test
+<span class="go">Please start /buttons_test with argument -e&lt;x&gt; where &lt;x&gt; means that used device is /dev/input/event&lt;x&gt;</span>
+<span class="gp">#</span> QObject: Cannot create children <span class="k">for </span>a parent that is in a different thread.
+<span class="go">(Parent is QNativeSocketEngine(0xe6eb30), parent&#39;s thread is QThread(0xc9d290), current thread is EvtThread(0xea7990)</span>
+
+<span class="gp">#</span> /buttons_test -e1
+<span class="go">Input device name: &quot;reptar_sp6_buttons&quot;</span>
+<span class="go">Supported events:</span>
+<span class="go">  Event type 0 (Sync)</span>
+<span class="go">  Event type 1 (Key)</span>
+<span class="go">    Event code 1 (Esc)</span>
+<span class="go">    Event code 14 (Backspace)</span>
+<span class="go">    Event code 28 (Enter)</span>
+<span class="go">    Event code 57 (Space)</span>
+<span class="go">    Event code 103 (Up)</span>
+<span class="go">    Event code 105 (Left)</span>
+<span class="go">    Event code 106 (Right)</span>
+<span class="go">    Event code 108 (Down)</span>
+<span class="go">Testing ... (will exit after 32 input events)</span>
+<span class="go">Type: (Key), code 103 (Up), DOWN</span>
+<span class="go">Event sync</span>
+<span class="go">Type: (Key), code 103 (Up), UP</span>
+<span class="go">Event sync</span>
+<span class="go">Type: (Key), code 108 (Down), DOWN</span>
+<span class="go">Event sync</span>
+<span class="go">Type: (Key), code 108 (Down), UP</span>
+<span class="go">Event sync</span>
+<span class="go">Type: (Key), code 106 (Right), DOWN</span>
+<span class="go">Event sync</span>
+<span class="go">Type: (Key), code 106 (Right), UP</span>
+<span class="go">Event sync</span>
+<span class="go">Type: (Key), code 105 (Left), DOWN</span>
+<span class="go">Event sync</span>
+<span class="go">Type: (Key), code 105 (Left), UP</span>
+<span class="go">Event sync</span>
+<span class="go">Type: (Key), code 28 (Enter), DOWN</span>
+<span class="go">Event sync</span>
+<span class="go">Type: (Key), code 28 (Enter), UP</span>
+<span class="go">Event sync</span>
+<span class="go">Type: (Key), code 1 (Esc), DOWN</span>
+<span class="go">Event sync</span>
+<span class="go">Type: (Key), code 1 (Esc), UP</span>
+<span class="go">Event sync</span>
+<span class="go">Type: (Key), code 57 (Space), DOWN</span>
+<span class="go">Event sync</span>
+<span class="go">Type: (Key), code 57 (Space), UP</span>
+<span class="go">Event sync</span>
+<span class="go">Type: (Key), code 14 (Backspace), DOWN</span>
+<span class="go">Event sync</span>
+<span class="go">Type: (Key), code 14 (Backspace), UP</span>
+<span class="go">Event sync</span>
+<span class="gp">#</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="lab2.html" class="btn btn-neutral" title="Periferal Emulations" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Antoine Zen-Ruffinen, Rabia Saeed.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
