@@ -4,6 +4,10 @@
 /* Only LEDS 0 to 5 are under CPU control. 6 and 7 are used by the FPGA itself */
 #define SP6_NUM_LEDS 6
 
+#define FPGA_BASE 0x18000000
+#define LED_OFFSET 0x003a
+
+
 struct reptar_sp6_led_platdata {
 	char	*name;
 	int		bit;		/* bit number in LEDS register */

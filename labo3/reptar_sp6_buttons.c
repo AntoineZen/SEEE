@@ -40,7 +40,20 @@ static irqreturn_t reptar_sp6_buttons_irq(int irq, void *dev_id)
 {
   struct reptar_sp6_buttons *dev = dev_id;
 
-  /* to be completed */
+
+
+  if (!(*(dev->irq_reg) & 0x10))
+    {
+      printk("Button IRQ triggered & IRQ_STATUS not set!\n");
+    }
+
+  /* take the button number from the IRQ CTRL reg */
+  dev->current_button = *(dev->btns_reg);
+
+  /* Clear the IRQ   (clear bit is the last bit)*/
+  *(dev->irq_reg) |= 1;
+
+  //printk("reptar_sp6_buttons_irq(%d)\n", dev->current_button);
 
   return IRQ_WAKE_THREAD;
 }
@@ -52,6 +65,8 @@ static irqreturn_t reptar_sp6_buttons_irq_thread(int irq, void *dev_id)
 	struct input_dev *input = dev->input;
 	int pressed;
 	unsigned int key;
+
+	//printk("reptar_sp6_buttons_irq_thread()\n");
 
 	do {
 	  pressed = fls(dev->current_button);
@@ -117,8 +132,24 @@ static int reptar_sp6_buttons_probe(struct platform_device *pdev)
 		return -1;
 	}
 
+
+
 	/* Register 2 interrupt handlers (top, bottom) */
-	/* ... */
+	ret = request_threaded_irq( btns->irq,
+				    reptar_sp6_buttons_irq,
+				    reptar_sp6_buttons_irq_thread,
+				    IRQF_TRIGGER_RISING,
+				    "sp6_buttons",
+				    btns);
+	if(ret)
+	{
+	  dev_err(&pdev->dev, "Failed request IRQ\n");
+		      return -1;
+	}
+
+	// Enable IRQ at FPGA level
+	*(btns->irq_reg) |= 0x0080;
+	printk("IRQ_CTR_REG = 0x%04x\n", *(btns->irq_reg));
 
 	platform_set_drvdata(pdev, btns);
 

@@ -11,20 +11,22 @@ int main(int argc, char **argv)
 {
 	int ret;
 
-	FILE* f = fopen("/dev/sp6", "rw");
+	int f = open("/dev/sp6", O_RDWR);
 
 	// Read initial value
-	ret = fread(buffer, sizeof(buffer), 1, f);
+	ret = read(f, buffer, sizeof(buffer));
 	printf("Read \"%s\" (%d bytes)\n", buffer, ret);
 
 	// modify the kernel value
-	fseek(f, 0, SEEK_SET);
+	lseek(f, 0, SEEK_SET);
 	sprintf(buffer, "Hello kernel!");
-	ret = fwrite(buffer, strlen(buffer), 1, f);
+	ret = write(f, buffer, strlen(buffer));
 	printf("Write \"%s\" (%d bytes)\n", buffer, ret);
 
 	// Read modified value
-	fseek(f, 0, SEEK_SET);
-	ret = fread(buffer, 1, sizeof(buffer), f);
+	lseek(f, 0, SEEK_SET);
+	ret = read(f, buffer, sizeof(buffer));
 	printf("Read \"%s\" (%d bytes)\n", buffer, ret);
+
+	close(f);
 }

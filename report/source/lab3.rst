@@ -43,6 +43,7 @@ In this section, we will deploy the environment from the MMC cart and we will ex
 We can then deplay the compiled files to the root file-system of the emulated system using the provided srcipt:
 
 .. code-block:: console
+
     redsuser@vm-reds-2015s2:~/seee_student/drivers$ cd ..
     redsuser@vm-reds-2015s2:~/seee_student$ ./deploy 
     Deploying into reptar rootfs ...
@@ -281,6 +282,204 @@ The numbers after the owner & group are the major and minor mumbers, so for our 
 LEDs Driver
 -----------
 
+In this part, we will add the LED driver functionality to our driver. For this, we first need to map the LEDS register to our driver address space. This is done using ``ioremap()`` from the probe function. We must also create a new driver of the class "LED":
+
+.. code-block:: c
+
+    static int reptar_sp6_led_probe(struct platform_device *pdev)
+    {
+    	struct reptar_sp6_led_platdata *pdata = pdev->dev.platform_data;
+    	struct reptar_sp6_led *led;
+    	struct platform_device *fpga_pdev;
+    	struct resource *fpga_resource;
+    	int ret;
+    
+    
+    	....
+    
+        /* Map the LED register */
+    	led->reg = ioremap(FPGA_BASE + LED_OFFSET, 4);
+    
+    	/* Register our new led device into led class */
+    
+    	printk("Alocating the LEDs\n");
+    	ret = led_classdev_register(pdev->dev.parent, &(pdev_to_sp6_led(pdev)->cdev));
+    	if(ret)
+    	{
+    	  dev_err(&pdev->dev, "can't allocate led driver\n");
+    	  return -ENOENT;
+    	}
+    
+    
+    	return 0;
+    }
+
+
+It is alos a good practice to reserve the I/O memory using ``request_mem_region()`` and to release it with ``release_mem_region()``:
+
+.. code-block:: c
+
+    int __init reptar_sp6_leds_init(struct platform_device *parent_fpga)
+    {
+    	int i;
+    
+    	request_mem_region(FPGA_BASE + LED_OFFSET, 4, "sp6_leds");
+    
+    	... // Rest of function
+    }
+    
+    void __exit reptar_sp6_leds_exit(void)
+    {
+    	int i;
+    
+    	... // Rest of function
+    
+    	release_mem_region(FPGA_BASE + LED_OFFSET, 4);
+    }
+
+Button driver
+-------------
+
+In this task, we will implement the button driver using the IRQ. The interrupt to map is the vector **10** as seen in the previous lab.  this can be done from the module probe function as following:
+
+.. code-block:: c
+
+    static int reptar_sp6_buttons_probe(struct platform_device *pdev)
+    {
+    	struct reptar_sp6_buttons_platdata *pdata = pdev->dev.platform_data;
+    	struct reptar_sp6_buttons *btns;
+    	struct input_dev *input;
+    	struct platform_device *fpga_pdev;
+    	struct resource *res;
+    	int ret;
+    	int gpio;
+    	int i;
+    
+    	//... more code
+    
+    	/* Register 2 interrupt handlers (top, bottom) */
+    	ret = request_threaded_irq( btns->irq,
+    				    reptar_sp6_buttons_irq,
+    				    reptar_sp6_buttons_irq_thread,
+    				    IRQF_TRIGGER_RISING,
+    				    "sp6_buttons",
+    				    btns);
+    	if(ret)
+    	{
+    	  dev_err(&pdev->dev, "Failed request IRQ\n");
+    		      return -1;
+    	}
+    
+    	// Enable IRQ at FPGA level
+    	*(btns->irq_reg) |= 0x0080;
+    	//printk("IRQ_CTR_REG = 0x%04x\n", *(btns->irq_reg));
+    
+    	platform_set_drvdata(pdev, btns);
+    
+    	/* Registration as input device */
+    
+    	// ...
+    	
+    	return 0;
+    }
+
+**Note** that we also need to enable the interrupt at FPGA level. This is done by the ``*(btns->irq_reg) |= 0x0080`` instruction!
+
+We need then to get the button number and clear the IRQ from the imediate IRQ handler call-back (not from the thread):
+
+.. code-block:: c
+
+    static irqreturn_t reptar_sp6_buttons_irq(int irq, void *dev_id)
+    {
+      struct reptar_sp6_buttons *dev = dev_id;
+    
+    
+    
+      if (!(*(dev->irq_reg) & 0x10))
+        {
+          printk("Button IRQ triggered & IRQ_STATUS not set!\n");
+        }
+    
+      /* take the button number from the IRQ CTRL reg */
+      dev->current_button = *(dev->btns_reg);
+    
+      /* Clear the IRQ   (clear bit is the last bit)*/
+      *(dev->irq_reg) |= 1;
+    
+      //printk("reptar_sp6_buttons_irq(%d)\n", dev->current_button);
+    
+      return IRQ_WAKE_THREAD;
+    }
+    
+    
+We can then the module using the povided utility:
+
+.. code-block:: console
+
+    # insmod /sp6.ko 
+    reptar_sp6: module starting...
+    [DOM-0] <4>Probing FPGA driver (device: fpga)
+    [DOM-0] <7>Registered led device: sp6_led0
+    [DOM-0] <7>Registered led device: sp6_led1
+    [DOM-0] <7>Registered led device: sp6_led2
+    [DOM-0] <7>Registered led device: sp6_led3
+    [DOM-0] <7>Registered led device: sp6_led4
+    [DOM-0] <7>Registered led device: sp6_led5
+    [DOM-0] <4>IRQ_CTR_REG = 0x0080
+    [DOM-0] <6>input: reptar_sp6_buttons as /devices/platform/fpga/reptar_sp6_buttons/input/input1
+    [DOM-0] <4>reptar_sp6: done.
+    # /buttons_test 
+    Please start /buttons_test with argument -e<x> where <x> means that used device is /dev/input/event<x>
+    # QObject: Cannot create children for a parent that is in a different thread.
+    (Parent is QNativeSocketEngine(0xe6eb30), parent's thread is QThread(0xc9d290), current thread is EvtThread(0xea7990)
+    
+    # /buttons_test -e1
+    Input device name: "reptar_sp6_buttons"
+    Supported events:
+      Event type 0 (Sync)
+      Event type 1 (Key)
+        Event code 1 (Esc)
+        Event code 14 (Backspace)
+        Event code 28 (Enter)
+        Event code 57 (Space)
+        Event code 103 (Up)
+        Event code 105 (Left)
+        Event code 106 (Right)
+        Event code 108 (Down)
+    Testing ... (will exit after 32 input events)
+    Type: (Key), code 103 (Up), DOWN
+    Event sync
+    Type: (Key), code 103 (Up), UP
+    Event sync
+    Type: (Key), code 108 (Down), DOWN
+    Event sync
+    Type: (Key), code 108 (Down), UP
+    Event sync
+    Type: (Key), code 106 (Right), DOWN
+    Event sync
+    Type: (Key), code 106 (Right), UP
+    Event sync
+    Type: (Key), code 105 (Left), DOWN
+    Event sync
+    Type: (Key), code 105 (Left), UP
+    Event sync
+    Type: (Key), code 28 (Enter), DOWN
+    Event sync
+    Type: (Key), code 28 (Enter), UP
+    Event sync
+    Type: (Key), code 1 (Esc), DOWN
+    Event sync
+    Type: (Key), code 1 (Esc), UP
+    Event sync
+    Type: (Key), code 57 (Space), DOWN
+    Event sync
+    Type: (Key), code 57 (Space), UP
+    Event sync
+    Type: (Key), code 14 (Backspace), DOWN
+    Event sync
+    Type: (Key), code 14 (Backspace), UP
+    Event sync
+    # 
 
 
 

@@ -22,7 +22,7 @@
 
 #include "reptar_sp6.h"
 
-#define FPGA_BASE 0x18000000
+
 
 /* BOARD SPECIFIC CODE */
 static struct resource fpga_resources[] = {
@@ -98,15 +98,10 @@ static char bitstream_version[80] = "FPGA bitstream VERSION";
 /* Callbacks for char device */
 
 
-ssize_t fpga_read(struct file *filp, char *buffer, size_t length, loff_t *offset) {
-
-  /* If offset is not zero, it means that a previous read already occured.
-   * So, we tell the user space that we are at the end
-  */
-	printk("read(len=%d, offset=%d)\n", length, *offset);
-
-
-
+ssize_t fpga_read(struct file *filp, char *buffer, size_t length, loff_t *offset)
+{
+  printk("read(len=%d, offset=%d)\n", length, *offset);
+  // if offset is not zero, we have readen everithing, return that there is zero byte to read
   if (*offset != 0)
     return 0;
 
@@ -117,34 +112,33 @@ ssize_t fpga_read(struct file *filp, char *buffer, size_t length, loff_t *offset
   }
   // Avoid overflows
   if (length > sizeof(bitstream_version))
-	{
-	  length = sizeof(bitstream_version);
-	}
+  {
+    length = sizeof(bitstream_version);
+  }
 
+  // Copy to the userspace
   if(copy_to_user(buffer, bitstream_version, length))
   {
-	  printk("copy_to_user failed!\n");
-	  return -EFAULT;
+    printk("copy_to_user failed!\n");
+    return -EFAULT;
   }
 
   return length;
-
 }
 
-ssize_t fpga_write(struct file *filp, const char *buff, size_t len, loff_t *off) {
+ssize_t fpga_write(struct file *filp, const char *buff, size_t len, loff_t *off)
+{
+  // Avoid overflows
+  if (len > sizeof(bitstream_version))
+  {
+      len = sizeof(bitstream_version);
+  }
 
+  printk("compying %d bytes\n	", len);
+  if(copy_from_user(bitstream_version, buff, len))
+    return -EFAULT;
 
-	// Avoid overflows
-	if (len > sizeof(bitstream_version))
-	{
-		len = sizeof(bitstream_version);
-	}
-
-	printk("compying %d bytes\n	", len);
-	if(copy_from_user(bitstream_version, buff, len))
-		  return -EFAULT;
-
-	return len;
+  return len;
 }
 
 struct file_operations fpga_fops = {

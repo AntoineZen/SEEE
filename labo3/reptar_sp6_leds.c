@@ -19,6 +19,7 @@
 
 static DEFINE_SPINLOCK(reg_lock);
 
+
 static struct platform_device *reptar_sp6_leds[SP6_NUM_LEDS];
 
 struct reptar_sp6_led {
@@ -45,7 +46,17 @@ static void reptar_sp6_led_set(struct led_classdev *led_cdev, enum led_brightnes
 	/* Protect access to shared register */
 	spin_lock(&reg_lock);
 
+
+
 	/* to be completed */
+	if(value)
+	{
+	    *(led->reg) |= (1 << pd->bit);
+	}
+	else
+	{
+	    *(led->reg) &= ~(1 << pd->bit);
+	}
 
 	spin_unlock(&reg_lock);
 
@@ -55,7 +66,12 @@ static int reptar_sp6_led_remove(struct platform_device *dev)
 {
 	struct reptar_sp6_led *led = pdev_to_sp6_led(dev);
 
+	iounmap(led->reg);
+
+
 	kfree(led);
+
+
 
 	return 0;
 }
@@ -67,6 +83,7 @@ static int reptar_sp6_led_probe(struct platform_device *pdev)
 	struct platform_device *fpga_pdev;
 	struct resource *fpga_resource;
 	int ret;
+
 
 	led = kzalloc(sizeof(struct reptar_sp6_led), GFP_KERNEL);
 	if (led == NULL) {
@@ -94,12 +111,16 @@ static int reptar_sp6_led_probe(struct platform_device *pdev)
 	}
 
 	/* Map the LED register */
-
-    /* ... */
+	led->reg = ioremap(FPGA_BASE + LED_OFFSET, 4);
 
 	/* Register our new led device into led class */
+	ret = led_classdev_register(pdev->dev.parent, &(pdev_to_sp6_led(pdev)->cdev));
+	if(ret)
+	{
+	  dev_err(&pdev->dev, "can't allocate led driver\n");
+	  return -ENOENT;
+	}
 
-	/* ... */
 
 	return 0;
 }
@@ -117,6 +138,8 @@ static struct platform_driver reptar_sp6_led_driver = {
 int __init reptar_sp6_leds_init(struct platform_device *parent_fpga)
 {
 	int i;
+
+	request_mem_region(FPGA_BASE + LED_OFFSET, 4, "sp6_leds");
 
 	for (i = 0; i < SP6_NUM_LEDS; i++) {
 
@@ -140,4 +163,6 @@ void __exit reptar_sp6_leds_exit(void)
 	}
 
 	platform_driver_unregister(&reptar_sp6_led_driver);
+
+	release_mem_region(FPGA_BASE + LED_OFFSET, 4);
 }
