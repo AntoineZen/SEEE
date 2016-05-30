@@ -1,0 +1,474 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Embeded Viratualisation &mdash; SEEE 0.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="SEEE 0.0 documentation" href="index.html"/>
+        <link rel="prev" title="Drivers" href="lab3.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> SEEE
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="lab1.html">REPTAR Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lab2.html">Periferal Emulations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lab3.html">Drivers</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Embeded Viratualisation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#workspace-patching">Workspace patching</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#embeddedxen-environement-test">EmbeddedXEN environement test</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#sp6-driver-deployment-inside-dom-0">SP6 driver deployment inside DOM-0</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dom-0-and-dom-u-ineraction-using-para-virtualized-input-interface">Dom-0 and Dom-U ineraction using para-virtualized input interface</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">SEEE</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Embeded Viratualisation</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/lab4.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="embeded-viratualisation">
+<h1>Embeded Viratualisation<a class="headerlink" href="#embeded-viratualisation" title="Permalink to this headline">¶</a></h1>
+<p>In this lab, we get familiar with the Embedded XEN environment. First, we need to patch the current projet. Then we will try our first run of the virtualizer. We will then recompile the driver made in the last lab for the virualized kernel. Finaly we will make the driver for the non-priviliedged OS.</p>
+<div class="section" id="workspace-patching">
+<h2>Workspace patching<a class="headerlink" href="#workspace-patching" title="Permalink to this headline">¶</a></h2>
+<p>First, we need to modify the <code class="docutils literal"><span class="pre">repatar_sp6_buttons.c</span></code> to compitle with the XEN (XEN is the virtualizer) extensions. This is done as following:</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="cp">#include &quot;reptar_sp6.h&quot;</span>
+
+<span class="cp">#if 1</span>
+<span class="cp">#include &lt;xen-guest/io/kbdif.h&gt;</span>
+<span class="cp">#include &lt;xen-guest/console.h&gt;</span>
+
+<span class="k">extern</span> <span class="kt">int</span> <span class="nf">omapfb_xen_switch_domain</span><span class="p">(</span><span class="kt">domid_t</span> <span class="n">dom</span><span class="p">);</span>
+<span class="cp">#endif</span>
+
+<span class="k">static</span> <span class="k">struct</span> <span class="n">platform_device</span> <span class="o">*</span><span class="n">reptar_sp6_btns</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>We must then extract the Embedded XEN projet and compile it:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">redsuser@vm-reds-2015s2:~/seee_student$</span> tar -xf embeddedxen.tar.bz2
+<span class="gp">redsuser@vm-reds-2015s2:~/seee_student$</span> rm embeddedxen.tar.bz2
+<span class="gp">redsuser@vm-reds-2015s2:~/seee_student$</span> ./buildex
+<span class="go">...</span>
+<span class="go">  MV      xen/arch/arm/boot/Image.tmp to xen/arch/arm/boot/Image</span>
+<span class="go">  Kernel: xen/arch/arm/boot/Image is ready</span>
+<span class="go">  Kernel: xen/arch/arm/boot/uImage is being built...</span>
+<span class="go">  GZIP    arch/arm/boot/compressed/piggy.gz</span>
+<span class="go">  AS      arch/arm/boot/compressed/piggy.o</span>
+<span class="go">  LD      arch/arm/boot/compressed/vmlinux</span>
+<span class="go">  MV      xen/arch/arm/boot/Image to xen/arch/arm/boot/Image.final</span>
+<span class="go">  OBJCOPY arch/arm/boot/zImage</span>
+<span class="go">  Kernel: arch/arm/boot/zImage is ready</span>
+<span class="go">  UIMAGE  arch/arm/boot/uImage</span>
+<span class="go">Image Name:   EmbeddedXen-4.0.2</span>
+<span class="go">Created:      Mon May 30 21:29:42 2016</span>
+<span class="go">Image Type:   ARM Linux Kernel Image (uncompressed)</span>
+<span class="go">Data Size:    4902700 Bytes = 4787.79 kB = 4.68 MB</span>
+<span class="go">Load Address: 80008000</span>
+<span class="go">Entry Point:  80008000</span>
+<span class="go">  MV      uImage to uImage.reptar</span>
+<span class="go">  Kernel: arch/arm/boot/uImage.reptar is ready</span>
+<span class="gp">#</span><span class="c">######## WARNING Use uImage.reptar (instead of uImage)</span>
+<span class="go">------------------------------------------------------[ BUILDING EmbeddedXEN Hypervisor DONE ]---</span>
+</pre></div>
+</div>
+<p>We must copy the new root-fs filesystem to our workspace:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">redsuser@vm-reds-2015s2:~/seee_student$</span> cp ~/Downloads/reptar4-sdcard.img filesystem/
+</pre></div>
+</div>
+<p>Finally, we remplace the old linux kernel, with the XEN hypervisor:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">redsuser@vm-reds-2015s2:~/seee_student$</span> mv uImage uImage.old
+<span class="gp">redsuser@vm-reds-2015s2:~/seee_student$</span> ln -sf embeddedxen/uimage.embeddedxen.reptar uImage
+</pre></div>
+</div>
+<p>The environement it now ready to be run!</p>
+</div>
+<div class="section" id="embeddedxen-environement-test">
+<h2>EmbeddedXEN environement test<a class="headerlink" href="#embeddedxen-environement-test" title="Permalink to this headline">¶</a></h2>
+<p>We can now deploy our files (kernel module and test programs) to the new root-fs using the new version of the <code class="docutils literal"><span class="pre">deploy</span></code> script:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">redsuser@vm-reds-2015s2:~/seee_student$</span> ./deploy ex
+<span class="go">Deploying into EmbeddedXEN rootfs ...</span>
+<span class="go">Mounting filesystem/reptar4-sdcard.img...</span>
+<span class="go">SD card partitions mounted in &#39;boot_tmp&#39; and &#39;filesystem_tmp&#39; directories</span>
+<span class="go">Unmounting SD card image...</span>
+<span class="go">  Synchronizing .img file</span>
+<span class="go">  Unmounting &#39;boot_tmp&#39; and &#39;filesystem_tmp&#39;...</span>
+<span class="go">Done !</span>
+</pre></div>
+</div>
+<p>We can launch the EmbeddedXEN hypervisor inside QEMU using the provided <code class="docutils literal"><span class="pre">stex</span></code> script. It will start QEMU with the new root-fs. The <code class="docutils literal"><span class="pre">deploy</span></code> script has copied the EmbeddedXEN hypervisor &#8220;kernel&#8221; image to the TFTP folder. So when we will boot from U-Boot, it will be run instead of the standrad linux kernel:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">redsuser@vm-reds-2015s2:~/seee_student$</span> ./stex
+<span class="go">....</span>
+
+
+<span class="go">U-Boot 2011.09-00000-g9af6a15 (Feb 10 2015 - 16:10:59)</span>
+
+<span class="go">U-Boot code: 80008000 -&gt; 80065570  BSS: -&gt; 800F7C68</span>
+<span class="go">.....</span>
+<span class="go">Address in SROM is         52:54:00:12:34:56</span>
+<span class="go">Address in environment is  e4:af:a1:40:01:fe</span>
+
+<span class="go">Reptar # boot</span>
+<span class="go">reading uImage</span>
+
+<span class="go">4902764 bytes read</span>
+<span class="gp">#</span><span class="c"># Booting kernel from Legacy Image at 81600000 ...</span>
+<span class="go">   Image Name:   EmbeddedXen-4.0.2</span>
+<span class="go">   Image Type:   ARM Linux Kernel Image (uncompressed)</span>
+<span class="go">   Data Size:    4902700 Bytes = 4.7 MiB</span>
+<span class="go">   Load Address: 80008000</span>
+<span class="go">   Entry Point:  80008000</span>
+<span class="go">   Verifying Checksum ... OK</span>
+<span class="go">   Loading Kernel Image ... OK</span>
+<span class="go">OK</span>
+<span class="go">Using machid 0x2694</span>
+
+<span class="go">Starting kernel ...</span>
+
+<span class="go">Using machid 0x2694</span>
+<span class="go">Uncompressing Xen........ done, booting the kernel.</span>
+<span class="go">  _____           _              _     _          ___  _______ _   _</span>
+<span class="go"> | ____|_ __ ___ | |__   ___  __| | __| | ___  __| \ \/ / ____| \ | |</span>
+<span class="go"> |  _| | &#39;_ ` _ \| &#39;_ \ / _ \/ _` |/ _` |/ _ \/ _` |\  /|  _| |  \| |</span>
+<span class="go"> | |___| | | | | | |_) |  __/ (_| | (_| |  __/ (_| |/  \| |___| |\  |</span>
+<span class="go"> |_____|_| |_| |_|_.__/ \___|\__,_|\__,_|\___|\__,_/_/\_\_____|_| \_|</span>
+
+<span class="go">  ____</span>
+<span class="go"> |___ \  __  __</span>
+<span class="go">   __) | \ \/ /</span>
+<span class="go">  / __/ _ &gt;  &lt;</span>
+<span class="go"> |_____(_)_/\_\</span>
+
+<span class="go">(XEN) EmbeddedXEN version 2.x / original XEN base: 4.0.2</span>
+<span class="go">(XEN)  EmbeddedXEN - Reconfigurable Embedded Digital System</span>
+<span class="go">(XEN)                (REDS) Institute from HEIG-VD/Switzerland</span>
+<span class="go">(XEN)  Copyright (c) 2007-2013 http://reds.heig-vd.ch</span>
+<span class="go">(XEN)</span>
+<span class="go">(XEN)  Latest ChangeSet:</span>
+<span class="go">(XEN)</span>
+<span class="go">(XEN) EmbeddedXEN Hypervisor Memory Layout</span>
+<span class="go">(XEN) ------------------------------------</span>
+<span class="go">(XEN) Min page:                0x8005c (phys)</span>
+<span class="go">(XEN) Max page (not included): 0x80c00 (phys)</span>
+<span class="go">......</span>
+<span class="go">(XEN) OMAP clockevent source: GPTIMER1 at 32768 Hz</span>
+<span class="go">[DOM-0] &lt;4&gt;Xen Start info :</span>
+<span class="go">[DOM-0] &lt;4&gt;Magic : xen-4.0-arm_32</span>
+<span class="go">[DOM-0] &lt;4&gt;Hypercall addr: ff00d820</span>
+<span class="go">[DOM-0] &lt;4&gt;Total Pages allocated to this domain : 16384</span>
+<span class="go">[DOM-0] &lt;4&gt;MACHINE address of shared info struct : 0x8024f000</span>
+<span class="go">[DOM-0] &lt;4&gt;VIRTUAL address of page directory : 0xc0004000</span>
+<span class="go">...</span>
+<span class="go">[DOM-U] ### HELLO FROM domU !!</span>
+<span class="go">[DOM-U] Starting logging: OK</span>
+<span class="go">[DOM-U] Starting mdev...</span>
+<span class="go">[DOM-U] Initializing random number generator... done.</span>
+<span class="go">[DOM-U] Starting network...</span>
+<span class="go">[DOM-U] ip: can&#39;t find device &#39;eth0&#39;</span>
+<span class="go">[DOM-U] ip: SIOCGIFFLAGS: No such device</span>
+<span class="go">[DOM-U] ip: can&#39;t find device &#39;eth0&#39;</span>
+<span class="go">[DOM-U] Starting dropbear sshd: OK</span>
+<span class="go">[DOM-U] Starting sshd: OK</span>
+<span class="go">[DOM-U]</span>
+<span class="go">[DOM-U] *** Welcome on REPTAR (HEIG-VD/REDS): use root/root to log in ***</span>
+<span class="go">reptar login: root</span>
+<span class="go">Password:</span>
+<span class="gp">#</span>
+<span class="gp">#</span> uname -a
+<span class="go">Linux reptar 3.0.12-reptar #3 Mon May 30 21:28:37 CEST 2016 armv7l GNU/Linux</span>
+</pre></div>
+</div>
+<p>We can boserve that when U-Boot starts the uImage, it expand XEN instead of the linux kernel. We then get messages preceeded by the <strong>(XEN)</strong> header. Those are message from the EmbeddedXEN hypervisor. We then have message from the priviledged OS preceded by the <strong>[DOM-0]</strong> header.</p>
+<p>Using a tripple <strong>CTRL+A</strong> key combination, we can switch to the un-priviliged OS:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">#</span> *** Serial input -&gt; DOMU <span class="o">(</span><span class="nb">type</span> <span class="s1">&#39;CTRL-a&#39;</span> three <span class="nb">times </span>to switch input to Xen<span class="o">)</span>.
+<span class="go">[DOM-U]</span>
+<span class="go">[DOM-U] *** Welcome on REPTAR (HEIG-VD/REDS): use root/root to log in ***</span>
+<span class="go">reptar login: root</span>
+<span class="go">[DOM-U] Password:</span>
+<span class="go">[DOM-U] # uname -a</span>
+<span class="go">[DOM-U] Linux reptar 3.4.6-paravirt #3 Mon May 30 21:29:22 CEST 2016 armv7-domUl GNU/Linux</span>
+<span class="go">[DOM-U] #</span>
+</pre></div>
+</div>
+<p>We can see now that the console is prefixed with the <strong>[DOM-U]</strong> header and that the runing kernel is patched. We see that from the <em>-paravirt</em> suffis in the version number.</p>
+<p>We can try to run the Qt demo application from <strong>Dom-0</strong>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">#</span> ./qtrun
+<span class="go">Cannot open keyboard input device &#39;/dev/input/event1&#39;: No such file or directory</span>
+</pre></div>
+</div>
+<p>The demo application shows up in the QEMU windows and is responsive. But whe we run it from the <strong>DOM-U</strong>, the QEMU windows does not updates:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">#</span> <span class="o">[</span>DOM-0<span class="o">]</span> &lt;4&gt;*** Serial input -&gt; DOMU <span class="o">(</span><span class="nb">type</span> <span class="s1">&#39;CTRL-a&#39;</span> three <span class="nb">times </span>to switch input to Xen<span class="o">)</span>.
+<span class="go">[DOM-U]</span>
+<span class="gp">#</span> ./qtrun
+</pre></div>
+</div>
+</div>
+<div class="section" id="sp6-driver-deployment-inside-dom-0">
+<h2>SP6 driver deployment inside DOM-0<a class="headerlink" href="#sp6-driver-deployment-inside-dom-0" title="Permalink to this headline">¶</a></h2>
+<p>In this section, we will re-compile, deploy and test the driver made in the last lab to the <strong>DOM-0</strong> (priviledged OS).</p>
+<p>First we need to modify the <code class="docutils literal"><span class="pre">Makefile</span></code> to compiles agains the new kernel. For this, we modify the line 19 of it from this:</p>
+<div class="highlight-make"><div class="highlight"><pre><span class="nv">KDIR</span>        <span class="o">=</span> ../linux-3.0-reptar
+</pre></div>
+</div>
+<p>To this</p>
+<div class="highlight-make"><div class="highlight"><pre><span class="nv">KDIR</span>        <span class="o">=</span> ../embeddedxen/linux-3.0-reptar-dom0
+</pre></div>
+</div>
+<p>We can then recompile the kernel module (a clean is required, as we have changed the target OS):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">redsuser@vm-reds-2015s2:~/seee_student$</span> <span class="nb">cd </span>drivers/
+<span class="gp">redsuser@vm-reds-2015s2:~/seee_student/drivers$</span> make clean
+<span class="go">make -C ../embeddedxen/linux-3.0-reptar-dom0 M=/home/redsuser/seee_student/drivers ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- clean</span>
+<span class="go">make[1]: Entering directory `/home/redsuser/seee_student/embeddedxen/linux-3.0-reptar-dom0&#39;</span>
+<span class="go">  CLEAN   /home/redsuser/seee_student/drivers/.tmp_versions</span>
+<span class="go">  CLEAN   /home/redsuser/seee_student/drivers/Module.symvers</span>
+<span class="go">make[1]: Leaving directory `/home/redsuser/seee_student/embeddedxen/linux-3.0-reptar-dom0&#39;</span>
+<span class="go">rm -f *.o</span>
+<span class="go">rm -f *.ko</span>
+<span class="go">rm -f buttons_test</span>
+<span class="go">rm -f usertest</span>
+<span class="go">rm -f Module.markers</span>
+<span class="go">rm -f modules.order</span>
+<span class="gp">redsuser@vm-reds-2015s2:~/seee_student/drivers$</span> make
+<span class="go">make -C ../embeddedxen/linux-3.0-reptar-dom0 M=/home/redsuser/seee_student/drivers ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf-</span>
+<span class="go">make[1]: Entering directory `/home/redsuser/seee_student/embeddedxen/linux-3.0-reptar-dom0&#39;</span>
+<span class="go">  LD      /home/redsuser/seee_student/drivers/built-in.o</span>
+<span class="go">  CC [M]  /home/redsuser/seee_student/drivers/reptar_sp6.o</span>
+<span class="go">/home/redsuser/seee_student/drivers/reptar_sp6.c: In function &#39;fpga_read&#39;:</span>
+<span class="go">/home/redsuser/seee_student/drivers/reptar_sp6.c:103:3: warning: format &#39;%d&#39; expects argument of type &#39;int&#39;, but argument 3 has type &#39;loff_t&#39; [-Wformat]</span>
+<span class="go">  CC [M]  /home/redsuser/seee_student/drivers/reptar_sp6_leds.o</span>
+<span class="go">  CC [M]  /home/redsuser/seee_student/drivers/reptar_sp6_buttons.o</span>
+<span class="go">  LD [M]  /home/redsuser/seee_student/drivers/sp6.o</span>
+<span class="go">  Building modules, stage 2.</span>
+<span class="go">  MODPOST 1 modules</span>
+<span class="go">  CC      /home/redsuser/seee_student/drivers/sp6.mod.o</span>
+<span class="go">  LD [M]  /home/redsuser/seee_student/drivers/sp6.ko</span>
+<span class="go">make[1]: Leaving directory `/home/redsuser/seee_student/embeddedxen/linux-3.0-reptar-dom0&#39;</span>
+<span class="go">arm-linux-gnueabihf-gcc -marm -I../embeddedxen/linux-3.0-reptar-dom0 -static buttons_test.c -o buttons_test</span>
+<span class="go">arm-linux-gnueabihf-gcc     usertest.c   -o usertest</span>
+<span class="gp">redsuser@vm-reds-2015s2:~/seee_student/drivers$</span>
+</pre></div>
+</div>
+<p>We can now test the new comiled driver inside the <strong>Dom-0</strong> of the hypervisor. For this we need to deploy it first and the we can run the system and load the kernel module inside the priviledged os:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">redsuser@vm-reds-2015s2:~/seee_student$</span> ./deploy ex
+<span class="go">Deploying into EmbeddedXEN rootfs ...</span>
+<span class="go">Mounting filesystem/reptar4-sdcard.img...</span>
+<span class="go">[sudo] password for redsuser:</span>
+<span class="go">SD card partitions mounted in &#39;boot_tmp&#39; and &#39;filesystem_tmp&#39; directories</span>
+<span class="go">Unmounting SD card image...</span>
+<span class="go">  Synchronizing .img file</span>
+<span class="go">  Unmounting &#39;boot_tmp&#39; and &#39;filesystem_tmp&#39;...</span>
+<span class="go">Done !</span>
+<span class="gp">redsuser@vm-reds-2015s2:~/seee_student$</span> ./stex
+<span class="go">...</span>
+<span class="go">Reptar # boot</span>
+<span class="go">...</span>
+
+<span class="go">[DOM-U] *** Welcome on REPTAR (HEIG-VD/REDS): use root/root to log in ***</span>
+<span class="go">reptar login: root</span>
+<span class="go">Password:</span>
+<span class="gp">#</span> ./qtrun
+<span class="go">Cannot open keyboard input device &#39;/dev/input/event1&#39;: No such file or directory</span>
+<span class="go">QObject: Cannot create children for a parent that is in a different thread.</span>
+<span class="go">(Parent is QNativeSocketEngine(0x16f4140), parent&#39;s thread is QThread(0x1523290), current thread is EvtThread(0x1752dd0)</span>
+<span class="go"></span>
+<span class="gp">#</span> insmod /sp6.ko
+<span class="go">reptar_sp6: module starting...</span>
+<span class="go">[DOM-0] &lt;4&gt;Probing FPGA driver (device: fpga)</span>
+<span class="go">[DOM-0] &lt;7&gt;Registered led device: sp6_led0</span>
+<span class="go">[DOM-0] &lt;7&gt;Registered led device: sp6_led1</span>
+<span class="go">[DOM-0] &lt;7&gt;Registered led device: sp6_led2</span>
+<span class="go">[DOM-0] &lt;7&gt;Registered led device: sp6_led3</span>
+<span class="go">[DOM-0] &lt;7&gt;Registered led device: sp6_led4</span>
+<span class="go">[DOM-0] &lt;7&gt;Registered led device: sp6_led5</span>
+<span class="go">[DOM-0] &lt;4&gt;IRQ_CTR_REG = 0x0080</span>
+<span class="go">[DOM-0] &lt;6&gt;input: reptar_sp6_buttons as /devices/platform/fpga/reptar_sp6_buttons/input/input1</span>
+<span class="go">[DOM-0] &lt;4&gt;reptar_sp6: done.</span>
+<span class="gp">#</span>
+<span class="gp">#</span> ./qtrun
+</pre></div>
+</div>
+<p>This demonstrate that before installing the driver, the application is un-responosive to the button actions. After installing the driver, pressing the middle button modify the text inside the application:</p>
+<img alt="_images/qt_app_modified_text.png" src="_images/qt_app_modified_text.png" />
+</div>
+<div class="section" id="dom-0-and-dom-u-ineraction-using-para-virtualized-input-interface">
+<h2>Dom-0 and Dom-U ineraction using para-virtualized input interface<a class="headerlink" href="#dom-0-and-dom-u-ineraction-using-para-virtualized-input-interface" title="Permalink to this headline">¶</a></h2>
+<p>TODO</p>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="lab3.html" class="btn btn-neutral" title="Drivers" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Antoine Zen-Ruffinen, Rabia Saeed.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
