@@ -304,12 +304,189 @@ This demonstrate that before installing the driver, the application is un-respon
 Dom-0 and Dom-U ineraction using para-virtualized input interface
 -----------------------------------------------------------------
 
-TODO
+First, we have to register the button driver to the XEN infracstructure, to tell that is is a front-end driver. This is preaty straytforward, we just have to call the xenvkbd_inputdev_regsiter() function from the driver probe function:
+
+.. code-block:: c
+
+    static int reptar_sp6_buttons_probe(struct platform_device *pdev)
+    {
+    	// ...
+    	struct input_dev *input;
+    	
+    
+        // ...
+    
+    	/* Register the input device in XEN */
+    	xenvkbd_inputdev_register(input, KEYBOARD);
+    
+    	return 0;
+    }
+    
+After this, the button press are received by the **DomU**. We need alos a way to toggle the framebuffer from **Dom0** to **DomU** and vice-verca. For this, we can modifiy the threaded IRQ function to switch the framebuffer upon certain button press. The ``reptar_sp6_buttons_irq_thread()`` is modified as following:
+
+.. code-block:: c
+
+    static irqreturn_t reptar_sp6_buttons_irq_thread(int irq, void *dev_id)
+    {
+    	struct reptar_sp6_buttons *dev = (struct reptar_sp6_buttons *) dev_id;
+    	struct input_dev *input = dev->input;
+    	int pressed;
+    	unsigned int key;
+    
+    	//printk("reptar_sp6_buttons_irq_thread()\n");
+    
+    	do {
+    	  pressed = fls(dev->current_button);
+    
+    	  if (!pressed)
+    	    return IRQ_HANDLED;
+    
+    	  key = dev->pdata->keys[pressed-1];
+    
+    
+    	  if (key == KEY_BACKSPACE)
+    	  {
+    	      omapfb_xen_switch_domain(1);
+    	      xenfb_set_focus(1);
+    	  }
+    	  else if (key== KEY_ESC)
+    	  {
+    	      omapfb_xen_switch_domain(0);
+    	      xenfb_set_focus(0);
+    	  }
+    	  else
+    	  {
+    
+    	      /* Report key press and release */
+    	      input_report_key(input, key, 1);
+    	      input_sync(input);
+    
+    	      input_report_key(input, key, 0);
+    	      input_sync(input);
+    	  }
+    
+    	  dev->current_button &= ~(1 << (pressed-1));
+    
+    	} while (dev->current_button);
+    
+    	return IRQ_HANDLED;
+    }
+
+
+So when the *ESC* key is pressed, we switch the framebuffer to **Dom0**. When the *BACKSPACE* key is pressed we switch it to **DomU**.
+
+LED interface paravirtualization
+--------------------------------
+
+In this part, first we need to implement the LEDs driver for the **DomU**. This goes in two parts. The **DomU** kernel needs a "front-end" driver that emulate the periferal interface and pass the event to the "back-end" driver, in the **Dom0**, that will actualy interact with the hardware. As on the driver lab, we need to create the periferals of class "leddriver" from the module probe funcion:
+
+.. code-block:: c
+
+    struct xenvled_data {
+    	char                *name;
+    	int                 id;
+    	struct led_classdev	cdev;
+    };
+    
+    
+    struct xenvled_data leds[6];
+
+    static int ledfront_probe(struct xenbus_device *dev, const struct xenbus_device_id *id)
+    {
+    	int i;
+    	int result;
+    
+    	//...
+    	
+    	for(i=0; i< 6; i++)
+    	{
+    	    leds[i].cdev.name = leds[i].name;
+    	    leds[i].cdev.brightness_set = ledfont_led_set;
+    
+            result = led_classdev_register(&dev->dev, &leds[i].cdev);
+            if(result)
+            {
+                printk( "can't allocate led driver %d\n", i);
+                return -ENOENT;
+    	   }
+    	}
+    
+        //...
+        
+    	return result;
+    }
+    
+This will create the ``/sys/class/leds/sp6_ledx`` folder like in the driver lab. When ``.../brightness`` file write call back is then implement as following:
+
+.. code-block:: c
+
+    struct xenvled_data {
+    	char				*name;
+    	int					id;
+    	struct led_classdev	cdev;
+    };
+    
+    
+    struct xenvled_data leds[6] = {
+        {.name="sp6_led0", .id=0},
+        {.name="sp6_led1", .id=1},
+        {.name="sp6_led2", .id=2},
+        {.name="sp6_led3", .id=3},
+        {.name="sp6_led4", .id=4},
+        {.name="sp6_led5", .id=5},
+    };
+
+    static void ledfont_led_set(struct led_classdev *led_cdev, enum led_brightness value)
+    {
+    
+      int id;
+      int i;
+    
+      // Find the id
+      for(i=0; i < 6; i++)
+      {
+        if(led_cdev == &leds[i].cdev)
+        {
+          id = leds[i].id;
+        }
+      }
+      send_led_request(id, value);
+    }
+    
+This passes the led set event with is ID and value to the **Dom0** driver via the XEN bus (internal IPC between the Doms). This will trigger an callback in the **Dom0** in the form of an virtual interrupt comming from the hardware. This will be the code of this "interrupt":
+
+.. code-block:: c
+
+    static void receive_led_request(int id, int brightness)
+    {
+    	/* How to interact with the LED subsystem and drive the LEDs? */
+    	printk("%s(%d, %d)\n", __func__, id, brightness);
+    
+    	if(brightness)
+    	{
+    	    *led_reg |= (1 << id);
+    	}
+    	else
+    	{
+    	    *led_reg &= ~(1 <<id);
+    	}
+    }
+
+This code simply write the hardware register, via the ``led_reg`` pointer. This pointer is global to the module (access limited to it using the ``static`` keyword) and intialized using ``ioremap()`` in the module probe() function:
+
+.. code-block:: c
+
+    static int ledback_probe(struct xenbus_device *dev, const struct xenbus_device_id *id)
+    {
+    	// ...
+    
+    	led_reg = ioremap(FPGA_BASE + LED_OFFSET, 4);
+    	
+    	// ...	
+    }
 
 
 
 
-
-
-
+    
 
