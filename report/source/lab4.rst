@@ -476,6 +476,8 @@ This code simply write the hardware register, via the ``led_reg`` pointer. This 
 
 .. code-block:: c
 
+    static uint16_t* led_reg;
+
     static int ledback_probe(struct xenbus_device *dev, const struct xenbus_device_id *id)
     {
     	// ...
