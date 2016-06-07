@@ -558,7 +558,9 @@
 </pre></div>
 </div>
 <p>This code simply write the hardware register, via the <code class="docutils literal"><span class="pre">led_reg</span></code> pointer. This pointer is global to the module (access limited to it using the <code class="docutils literal"><span class="pre">static</span></code> keyword) and intialized using <code class="docutils literal"><span class="pre">ioremap()</span></code> in the module probe() function:</p>
-<div class="highlight-c"><div class="highlight"><pre><span class="k">static</span> <span class="kt">int</span> <span class="nf">ledback_probe</span><span class="p">(</span><span class="k">struct</span> <span class="n">xenbus_device</span> <span class="o">*</span><span class="n">dev</span><span class="p">,</span> <span class="k">const</span> <span class="k">struct</span> <span class="n">xenbus_device_id</span> <span class="o">*</span><span class="n">id</span><span class="p">)</span>
+<div class="highlight-c"><div class="highlight"><pre><span class="k">static</span> <span class="kt">uint16_t</span><span class="o">*</span> <span class="n">led_reg</span><span class="p">;</span>
+
+<span class="k">static</span> <span class="kt">int</span> <span class="nf">ledback_probe</span><span class="p">(</span><span class="k">struct</span> <span class="n">xenbus_device</span> <span class="o">*</span><span class="n">dev</span><span class="p">,</span> <span class="k">const</span> <span class="k">struct</span> <span class="n">xenbus_device_id</span> <span class="o">*</span><span class="n">id</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="c1">// ...</span>
 
@@ -568,6 +570,276 @@
 <span class="p">}</span>
 </pre></div>
 </div>
+<p>We can ten write the application that interact with the LEDs. The application do the following actions:</p>
+<blockquote>
+<div><ul class="simple">
+<li>When the left button is pressed, it turn on the LED 2.</li>
+<li>When the middle button is pressed, it turn on the LED 1.</li>
+<li>When the right button is pressed, it turn on the LED 0.</li>
+<li>When the down button is pressed, it turn off all the above LEDs.</li>
+</ul>
+</div></blockquote>
+<p>This can be implemented as following:</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="cp">#include &lt;stdint.h&gt;</span>
+<span class="cp">#include &lt;linux/input.h&gt;</span>
+
+<span class="cp">#include &lt;string.h&gt;</span>
+<span class="cp">#include &lt;fcntl.h&gt;</span>
+<span class="cp">#include &lt;unistd.h&gt;</span>
+<span class="cp">#include &lt;stdio.h&gt;</span>
+
+<span class="cp">#define BITS_PER_LONG (sizeof(long) * 8)</span>
+<span class="cp">#define NBITS(x) ((((x)-1)/BITS_PER_LONG)+1)</span>
+
+<span class="cp">#define DEVICE &quot;/dev/input/event%c&quot;</span>
+<span class="cp">#define LED_LEFT &quot;/sys/class/leds/sp6_led2/brightness&quot;</span>
+<span class="cp">#define LED_CENTER &quot;/sys/class/leds/sp6_led1/brightness&quot;</span>
+<span class="cp">#define LED_RIGHT &quot;/sys/class/leds/sp6_led0/brightness&quot;</span>
+
+<span class="kt">void</span> <span class="nf">set_led</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">led</span><span class="p">,</span> <span class="kt">int</span> <span class="n">level</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">int</span> <span class="n">fd</span><span class="p">;</span>
+    <span class="kt">char</span> <span class="n">buffer</span><span class="p">[</span><span class="mi">16</span><span class="p">];</span>
+    <span class="n">memset</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="mh">0x00</span><span class="p">,</span> <span class="mi">16</span><span class="p">);</span>
+    <span class="n">sprintf</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="s">&quot;%i</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">level</span><span class="p">);</span>
+    <span class="k">if</span><span class="p">((</span><span class="n">fd</span> <span class="o">=</span> <span class="n">open</span><span class="p">(</span><span class="n">led</span><span class="p">,</span> <span class="n">O_WRONLY</span><span class="p">))</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="p">{</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;ERROR opening %s for writing&quot;</span><span class="p">,</span> <span class="n">led</span><span class="p">);</span>
+    <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">write</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="n">strlen</span><span class="p">(</span><span class="n">buffer</span><span class="p">));</span>
+    <span class="n">close</span><span class="p">(</span><span class="n">fd</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main</span> <span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="n">rd</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">input_event</span> <span class="n">ev</span><span class="p">;</span>
+    <span class="kt">unsigned</span> <span class="kt">short</span> <span class="n">id</span><span class="p">[</span><span class="mi">4</span><span class="p">];</span>
+    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">bit</span><span class="p">[</span><span class="n">EV_MAX</span><span class="p">][</span><span class="n">NBITS</span><span class="p">(</span><span class="n">KEY_MAX</span><span class="p">)];</span>
+    <span class="kt">char</span> <span class="n">name</span><span class="p">[</span><span class="mi">256</span><span class="p">]</span> <span class="o">=</span> <span class="s">&quot;Unknown&quot;</span><span class="p">;</span>
+    <span class="kt">char</span> <span class="n">devname</span><span class="p">[</span><span class="mi">80</span><span class="p">];</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">argc</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Please start %s with argument -e&lt;x&gt; where &lt;x&gt; means that used device is /dev/input/event&lt;x&gt;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+    <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">sprintf</span><span class="p">(</span><span class="n">devname</span><span class="p">,</span> <span class="n">DEVICE</span><span class="p">,</span> <span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">strlen</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">-</span><span class="mi">1</span><span class="p">]);</span>
+
+    <span class="k">if</span> <span class="p">((</span><span class="n">fd</span> <span class="o">=</span> <span class="n">open</span><span class="p">(</span><span class="n">devname</span><span class="p">,</span> <span class="n">O_RDONLY</span><span class="p">))</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">perror</span><span class="p">(</span><span class="s">&quot;failed to open device!&quot;</span><span class="p">);</span>
+            <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="c1">// Get input device name, to check that we have the right one.</span>
+    <span class="n">ioctl</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">EVIOCGNAME</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">name</span><span class="p">)),</span> <span class="n">name</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Input device name: </span><span class="se">\&quot;</span><span class="s">%s</span><span class="se">\&quot;\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">);</span>
+
+    <span class="c1">// Tell that we want to get all events</span>
+    <span class="n">memset</span><span class="p">(</span><span class="n">bit</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">bit</span><span class="p">));</span>
+    <span class="n">ioctl</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">EVIOCGBIT</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">EV_MAX</span><span class="p">),</span> <span class="n">bit</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+
+
+    <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+
+            <span class="c1">// Read the buttons</span>
+            <span class="n">rd</span> <span class="o">=</span> <span class="n">read</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">ev</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="n">input_event</span><span class="p">));</span>
+            <span class="c1">// Handle read errors</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">rd</span> <span class="o">&lt;</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="n">input_event</span><span class="p">))</span> <span class="p">{</span>
+                <span class="n">perror</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">error reading&quot;</span><span class="p">);</span>
+                <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="c1">// If we have key event</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">ev</span><span class="p">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">EV_KEY</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="c1">// Manage the LEDs according the button pressed</span>
+                <span class="k">if</span><span class="p">(</span><span class="n">ev</span><span class="p">.</span><span class="n">code</span> <span class="o">==</span> <span class="n">KEY_LEFT</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Got left</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+                    <span class="n">set_led</span><span class="p">(</span><span class="n">LED_LEFT</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+                <span class="p">}</span>
+                <span class="k">else</span> <span class="k">if</span><span class="p">(</span><span class="n">ev</span><span class="p">.</span><span class="n">code</span> <span class="o">==</span> <span class="n">KEY_RIGHT</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Got right</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+                    <span class="n">set_led</span><span class="p">(</span><span class="n">LED_RIGHT</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+                <span class="p">}</span>
+                <span class="k">else</span> <span class="k">if</span><span class="p">(</span><span class="n">ev</span><span class="p">.</span><span class="n">code</span> <span class="o">==</span> <span class="n">KEY_DOWN</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Got down</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+                    <span class="n">set_led</span><span class="p">(</span><span class="n">LED_LEFT</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+                    <span class="n">set_led</span><span class="p">(</span><span class="n">LED_RIGHT</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+                    <span class="n">set_led</span><span class="p">(</span><span class="n">LED_CENTER</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+                <span class="p">}</span>
+                <span class="k">else</span> <span class="k">if</span><span class="p">(</span><span class="n">ev</span><span class="p">.</span><span class="n">code</span> <span class="o">==</span> <span class="n">KEY_ENTER</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Got enter</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+                    <span class="n">set_led</span><span class="p">(</span><span class="n">LED_CENTER</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+            <span class="k">else</span> <span class="k">if</span><span class="p">(</span><span class="n">ev</span><span class="p">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">EV_SYN</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="c1">// PASS</span>
+            <span class="p">}</span>
+            <span class="k">else</span>
+            <span class="p">{</span>
+                <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Error detected input event type: (%d)</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">ev</span><span class="p">.</span><span class="n">type</span><span class="p">);</span>
+            <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>If we like to to the same job from the kernel space, we can intercept the IRQ from XEN in the keyboard front-end <code class="docutils literal"><span class="pre">linux-3.4.6-domU/drivers/input/misc/xen-kbdfrond.c</span></code> and generate a led event from there. The IRQ handler then becomes:</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="k">static</span> <span class="kt">irqreturn_t</span> <span class="nf">input_handler</span><span class="p">(</span><span class="kt">int</span> <span class="n">rq</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">dev_id</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="n">xenkbd_info</span> <span class="o">*</span><span class="n">info</span> <span class="o">=</span> <span class="n">dev_id</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">xenkbd_page</span> <span class="o">*</span><span class="n">page</span> <span class="o">=</span> <span class="n">info</span><span class="o">-&gt;</span><span class="n">page</span><span class="p">;</span>
+    <span class="n">__u32</span> <span class="n">cons</span><span class="p">,</span> <span class="n">prod</span><span class="p">;</span>
+
+    <span class="n">prod</span> <span class="o">=</span> <span class="n">page</span><span class="o">-&gt;</span><span class="n">in_prod</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">prod</span> <span class="o">==</span> <span class="n">page</span><span class="o">-&gt;</span><span class="n">in_cons</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">IRQ_HANDLED</span><span class="p">;</span>
+    <span class="n">rmb</span><span class="p">();</span>                  <span class="cm">/* ensure we see ring contents up to prod */</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">cons</span> <span class="o">=</span> <span class="n">page</span><span class="o">-&gt;</span><span class="n">in_cons</span><span class="p">;</span> <span class="n">cons</span> <span class="o">!=</span> <span class="n">prod</span><span class="p">;</span> <span class="n">cons</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">union</span> <span class="n">xenkbd_in_event</span> <span class="o">*</span><span class="n">event</span><span class="p">;</span>
+            <span class="k">struct</span> <span class="n">input_dev</span> <span class="o">*</span><span class="n">dev</span><span class="p">;</span>
+            <span class="n">event</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">XENKBD_IN_RING_REF</span><span class="p">(</span><span class="n">page</span><span class="p">,</span> <span class="n">cons</span><span class="p">);</span>
+
+            <span class="n">dev</span> <span class="o">=</span> <span class="n">info</span><span class="o">-&gt;</span><span class="n">ptr</span><span class="p">;</span>
+            <span class="k">switch</span> <span class="p">(</span><span class="n">event</span><span class="o">-&gt;</span><span class="n">type</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">case</span> <span class="n">XENKBD_TYPE_MOTION</span>:
+                    <span class="n">input_report_rel</span><span class="p">(</span><span class="n">dev</span><span class="p">,</span> <span class="n">REL_X</span><span class="p">,</span> <span class="n">event</span><span class="o">-&gt;</span><span class="n">motion</span><span class="p">.</span><span class="n">rel_x</span><span class="p">);</span>
+                    <span class="n">input_report_rel</span><span class="p">(</span><span class="n">dev</span><span class="p">,</span> <span class="n">REL_Y</span><span class="p">,</span> <span class="n">event</span><span class="o">-&gt;</span><span class="n">motion</span><span class="p">.</span><span class="n">rel_y</span><span class="p">);</span>
+                    <span class="k">break</span><span class="p">;</span>
+            <span class="k">case</span> <span class="n">XENKBD_TYPE_KEY</span>:
+                    <span class="n">dev</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">test_bit</span><span class="p">(</span><span class="n">event</span><span class="o">-&gt;</span><span class="n">key</span><span class="p">.</span><span class="n">keycode</span><span class="p">,</span> <span class="n">info</span><span class="o">-&gt;</span><span class="n">kbd</span><span class="o">-&gt;</span><span class="n">keybit</span><span class="p">))</span>
+                            <span class="n">dev</span> <span class="o">=</span> <span class="n">info</span><span class="o">-&gt;</span><span class="n">kbd</span><span class="p">;</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">test_bit</span><span class="p">(</span><span class="n">event</span><span class="o">-&gt;</span><span class="n">key</span><span class="p">.</span><span class="n">keycode</span><span class="p">,</span> <span class="n">info</span><span class="o">-&gt;</span><span class="n">ptr</span><span class="o">-&gt;</span><span class="n">keybit</span><span class="p">))</span>
+                            <span class="n">dev</span> <span class="o">=</span> <span class="n">info</span><span class="o">-&gt;</span><span class="n">ptr</span><span class="p">;</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">dev</span><span class="p">)</span>
+                      <span class="p">{</span>
+                        <span class="n">handle_leds</span><span class="p">(</span><span class="n">event</span><span class="o">-&gt;</span><span class="n">key</span><span class="p">.</span><span class="n">keycode</span><span class="p">);</span>
+                            <span class="n">input_report_key</span><span class="p">(</span><span class="n">dev</span><span class="p">,</span> <span class="n">event</span><span class="o">-&gt;</span><span class="n">key</span><span class="p">.</span><span class="n">keycode</span><span class="p">,</span>
+                                             <span class="n">event</span><span class="o">-&gt;</span><span class="n">key</span><span class="p">.</span><span class="n">pressed</span><span class="p">);</span>
+                      <span class="p">}</span>
+                    <span class="k">else</span>
+                            <span class="n">printk</span><span class="p">(</span><span class="s">&quot;unhandled keycode 0x%x</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span>
+                                       <span class="n">event</span><span class="o">-&gt;</span><span class="n">key</span><span class="p">.</span><span class="n">keycode</span><span class="p">);</span>
+                    <span class="k">break</span><span class="p">;</span>
+            <span class="k">case</span> <span class="n">XENKBD_TYPE_POS</span>:
+                    <span class="o">/</span><span class="p">...</span>
+            <span class="p">}</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">dev</span><span class="p">)</span>
+                    <span class="n">input_sync</span><span class="p">(</span><span class="n">dev</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="n">mb</span><span class="p">();</span> <span class="cm">/* ensure we got ring contents */</span>
+    <span class="n">page</span><span class="o">-&gt;</span><span class="n">in_cons</span> <span class="o">=</span> <span class="n">cons</span><span class="p">;</span>
+
+    <span class="k">return</span> <span class="n">IRQ_HANDLED</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>With this modification, we can intercept the event of type <code class="docutils literal"><span class="pre">XENKBD_TYPE_KEY</span></code> and call the <code class="docutils literal"><span class="pre">handle_leds()</span></code> function. The handle led function is using the <code class="docutils literal"><span class="pre">send_led_request()</span></code> function from the led front-end. For this we need to remove is <code class="docutils literal"><span class="pre">static</span></code> attribute:</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="kt">void</span> <span class="nf">send_led_request</span><span class="p">(</span><span class="kt">int</span> <span class="n">id</span><span class="p">,</span> <span class="kt">int</span> <span class="n">brightness</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">// ...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>We can then call it from the <code class="docutils literal"><span class="pre">handle_leds()</span></code> function. This function will use the same logic as the user-space application:</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="cp">#define LED_LEFT 2</span>
+<span class="cp">#define LED_CENTER 1</span>
+<span class="cp">#define LED_RIGHT 0</span>
+<span class="cp">#include &lt;linux/input.h&gt;</span>
+<span class="k">extern</span> <span class="kt">void</span> <span class="nf">send_led_request</span><span class="p">(</span><span class="kt">int</span> <span class="n">id</span><span class="p">,</span> <span class="kt">int</span> <span class="n">brightness</span><span class="p">);</span>
+
+<span class="kt">void</span> <span class="nf">handle_leds</span><span class="p">(</span><span class="kt">int</span> <span class="n">keycode</span><span class="p">)</span>
+<span class="p">{</span>
+
+    <span class="n">printk</span><span class="p">(</span><span class="s">&quot;handle_leds()</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+    <span class="c1">// Manage the LEDs according the button pressed</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">keycode</span> <span class="o">==</span> <span class="n">KEY_LEFT</span><span class="p">)</span>
+    <span class="p">{</span>
+            <span class="n">printk</span><span class="p">(</span><span class="s">&quot;Got left</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+            <span class="n">send_led_request</span><span class="p">(</span><span class="n">LED_LEFT</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="k">if</span><span class="p">(</span><span class="n">keycode</span> <span class="o">==</span> <span class="n">KEY_RIGHT</span><span class="p">)</span>
+    <span class="p">{</span>
+            <span class="n">printk</span><span class="p">(</span><span class="s">&quot;Got right</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+            <span class="n">send_led_request</span><span class="p">(</span><span class="n">LED_RIGHT</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="k">if</span><span class="p">(</span><span class="n">keycode</span> <span class="o">==</span> <span class="n">KEY_DOWN</span><span class="p">)</span>
+    <span class="p">{</span>
+            <span class="n">printk</span><span class="p">(</span><span class="s">&quot;Got down</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+            <span class="n">send_led_request</span><span class="p">(</span><span class="n">LED_LEFT</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+            <span class="n">send_led_request</span><span class="p">(</span><span class="n">LED_RIGHT</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+            <span class="n">send_led_request</span><span class="p">(</span><span class="n">LED_CENTER</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="k">if</span><span class="p">(</span><span class="n">keycode</span> <span class="o">==</span> <span class="n">KEY_ENTER</span><span class="p">)</span>
+    <span class="p">{</span>
+            <span class="n">printk</span><span class="p">(</span><span class="s">&quot;Got enter</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+            <span class="n">send_led_request</span><span class="p">(</span><span class="n">LED_CENTER</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>We can then see the proper working of our modified driver by monitoring the <strong>DomU</strong> and <strong>Dom0</strong> kernel logs:</p>
+<div class="highlight-python"><div class="highlight"><pre>[DOM-U] *** Welcome on REPTAR (HEIG-VD/REDS): use root/root to log in ***
+reptar login: root
+Password:
+# insmod /sp6.ko
+reptar_sp6: module starting...
+[DOM-0] &lt;4&gt;Probing FPGA driver (device: fpga)
+[DOM-0] &lt;7&gt;Registered led device: sp6_led0
+[DOM-0] &lt;7&gt;Registered led device: sp6_led1
+[DOM-0] &lt;7&gt;Registered led device: sp6_led2
+[DOM-0] &lt;7&gt;Registered led device: sp6_led3
+[DOM-0] &lt;7&gt;Registered led device: sp6_led4
+[DOM-0] &lt;7&gt;Registered led device: sp6_led5
+[DOM-0] &lt;4&gt;IRQ_CTR_REG = 0x0080
+[DOM-0] &lt;6&gt;input: reptar_sp6_buttons as /devices/platform/fpga/reptar_sp6_buttons/input/input1
+[DOM-0] &lt;4&gt;reptar_sp6: done.
+# [DOM-0] &lt;4&gt;*** Serial input -&gt; DOMU (type &#39;CTRL-a&#39; three times to switch input to Xen).
+[DOM-U]
+[DOM-U] *** Welcome on REPTAR (HEIG-VD/REDS): use root/root to log in ***
+reptar login: root
+[DOM-U] Password:
+[DOM-U] # QObject: Cannot create children for a parent that is in a different thread.
+(Parent is QNativeSocketEngine(0x892210), parent&#39;s thread is QThread(0x6c2290), current thread is EvtThread(0x8bf070)
+handle_leds()
+[DOM-U] Got right
+[DOM-U] handle_leds()
+[DOM-U] Got right
+[DOM-0] &lt;4&gt;receive_led_request(0, 1)
+[DOM-0] &lt;4&gt;receive_led_request(0, 1)
+[DOM-U] handle_leds()
+[DOM-U] Got left
+[DOM-U] handle_leds()
+[DOM-U] Got left
+[DOM-0] &lt;4&gt;receive_led_request(2, 1)
+[DOM-0] &lt;4&gt;receive_led_request(2, 1)
+[DOM-U] handle_leds()
+[DOM-U] Got enter
+[DOM-U] handle_leds()
+[DOM-U] Got enter
+[DOM-0] &lt;4&gt;receive_led_request(1, 1)
+[DOM-0] &lt;4&gt;receive_led_request(1, 1)
+[DOM-U] handle_leds()
+[DOM-U] Got down
+[DOM-U] handle_leds()
+[DOM-U] Got down
+[DOM-0] &lt;4&gt;receive_led_request(2, 0)
+[DOM-0] &lt;4&gt;receive_led_request(0, 0)
+[DOM-0] &lt;4&gt;receive_led_request(1, 0)
+[DOM-0] &lt;4&gt;receive_led_request(2, 0)
+[DOM-0] &lt;4&gt;receive_led_request(0, 0)
+[DOM-0] &lt;4&gt;receive_led_request(1, 0)
+</pre></div>
+</div>
+<p>We can see that the <strong>DomU</strong> got the key events from the button and that it trigger the <code class="docutils literal"><span class="pre">receive_led_request()</span></code> IRQ in the <strong>Dom0</strong> in return. It works!</p>
+<p><strong>Note</strong> that way of doing the things works, but its generaly a bad idea to put application logic in driver code.</p>
 </div>
 </div>
 
