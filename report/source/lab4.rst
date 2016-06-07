@@ -488,7 +488,284 @@ This code simply write the hardware register, via the ``led_reg`` pointer. This 
     }
 
 
+We can ten write the application that interact with the LEDs. The application do the following actions:
 
+ - When the left button is pressed, it turn on the LED 2.
+ - When the middle button is pressed, it turn on the LED 1.
+ - When the right button is pressed, it turn on the LED 0.
+ - When the down button is pressed, it turn off all the above LEDs.
+ 
+This can be implemented as following:
+
+.. code-block:: c
+    
+    #include <stdint.h>
+    #include <linux/input.h>
+    
+    #include <string.h>
+    #include <fcntl.h>
+    #include <unistd.h>
+    #include <stdio.h>
+
+    #define BITS_PER_LONG (sizeof(long) * 8)
+    #define NBITS(x) ((((x)-1)/BITS_PER_LONG)+1)
+
+    #define DEVICE "/dev/input/event%c"
+    #define LED_LEFT "/sys/class/leds/sp6_led2/brightness"
+    #define LED_CENTER "/sys/class/leds/sp6_led1/brightness"
+    #define LED_RIGHT "/sys/class/leds/sp6_led0/brightness"
+    
+    void set_led(const char* led, int level)
+    {
+        int fd;
+        char buffer[16];
+        memset(buffer, 0x00, 16);
+        sprintf(buffer, "%i\n", level);
+        if((fd = open(led, O_WRONLY)) < 0)
+        {
+    	printf("ERROR opening %s for writing", led);
+    	return;
+        }
+        write(fd, buffer, strlen(buffer));
+        close(fd);
+    }
+    
+    int main (int argc, char **argv)
+    {
+        int fd, rd;
+        struct input_event ev;
+        unsigned short id[4];
+        unsigned long bit[EV_MAX][NBITS(KEY_MAX)];
+        char name[256] = "Unknown";
+        char devname[80];
+        
+        if (argc != 2) {
+    	printf("Please start %s with argument -e<x> where <x> means that used device is /dev/input/event<x>\n", argv[0]);
+    	return -1;
+        }
+        
+        sprintf(devname, DEVICE, argv[1][strlen(argv[1])-1]);
+        
+        if ((fd = open(devname, O_RDONLY)) < 0) {
+        	perror("failed to open device!");
+        	return 1;
+        }
+        
+        // Get input device name, to check that we have the right one.
+        ioctl(fd, EVIOCGNAME(sizeof(name)), name);
+        printf("Input device name: \"%s\"\n", name);
+        
+        // Tell that we want to get all events
+        memset(bit, 0, sizeof(bit));
+        ioctl(fd, EVIOCGBIT(0, EV_MAX), bit[0]);
+        
+        
+        while (1) {
+        
+        	// Read the buttons
+        	rd = read(fd, &ev, sizeof(struct input_event));
+        	// Handle read errors
+        	if (rd < (int) sizeof(struct input_event)) {
+        	    perror("\nerror reading");
+        	    return 1;
+        	}
+            
+        	// If we have key event
+        	if (ev.type == EV_KEY)
+        	{
+        	    // Manage the LEDs according the button pressed
+        	    if(ev.code == KEY_LEFT)
+        	    {
+            		printf("Got left\n");
+            		set_led(LED_LEFT, 1);
+        	    }
+        	    else if(ev.code == KEY_RIGHT)
+        	    {
+            		printf("Got right\n");
+            		set_led(LED_RIGHT, 1);
+        	    }
+        	    else if(ev.code == KEY_DOWN)
+        	    {
+            		printf("Got down\n");
+            		set_led(LED_LEFT, 0);
+            		set_led(LED_RIGHT, 0);
+            		set_led(LED_CENTER, 0);
+        	    }
+        	    else if(ev.code == KEY_ENTER)
+        	    {
+            		printf("Got enter\n");
+            		set_led(LED_CENTER, 1);
+        	    }
+        	}
+        	else if(ev.type == EV_SYN)
+        	{
+        	    // PASS
+        	}
+        	else
+        	{
+        	    printf("Error detected input event type: (%d)\n", ev.type);
+        	}
+        }
+    }
+
+
+If we like to to the same job from the kernel space, we can intercept the IRQ from XEN in the keyboard front-end ``linux-3.4.6-domU/drivers/input/misc/xen-kbdfrond.c`` and generate a led event from there. The IRQ handler then becomes:
+
+.. code-block:: c
+
+    static irqreturn_t input_handler(int rq, void *dev_id)
+    {
+    	struct xenkbd_info *info = dev_id;
+    	struct xenkbd_page *page = info->page;
+    	__u32 cons, prod;
+    
+    	prod = page->in_prod;
+    	if (prod == page->in_cons)
+    		return IRQ_HANDLED;
+    	rmb();			/* ensure we see ring contents up to prod */
+    	for (cons = page->in_cons; cons != prod; cons++) {
+    		union xenkbd_in_event *event;
+    		struct input_dev *dev;
+    		event = &XENKBD_IN_RING_REF(page, cons);
+    
+    		dev = info->ptr;
+    		switch (event->type) {
+    		case XENKBD_TYPE_MOTION:
+    			input_report_rel(dev, REL_X, event->motion.rel_x);
+    			input_report_rel(dev, REL_Y, event->motion.rel_y);
+    			break;
+    		case XENKBD_TYPE_KEY:
+    			dev = NULL;
+    			if (test_bit(event->key.keycode, info->kbd->keybit))
+    				dev = info->kbd;
+    			if (test_bit(event->key.keycode, info->ptr->keybit))
+    				dev = info->ptr;
+    			if (dev)
+    			  {
+    			    handle_leds(event->key.keycode);
+    				input_report_key(dev, event->key.keycode,
+    						 event->key.pressed);
+    			  }
+    			else
+    				printk("unhandled keycode 0x%x\n",
+    					   event->key.keycode);
+    			break;
+    		case XENKBD_TYPE_POS:
+    			/...
+    		}
+    		if (dev)
+    			input_sync(dev);
+    	}
+    	mb(); /* ensure we got ring contents */
+    	page->in_cons = cons;
+    
+    	return IRQ_HANDLED;
+    }
+
+With this modification, we can intercept the event of type ``XENKBD_TYPE_KEY`` and call the ``handle_leds()`` function. The handle led function is using the ``send_led_request()`` function from the led front-end. For this we need to remove is ``static`` attribute:
+
+.. code-block:: c
+
+    void send_led_request(int id, int brightness)
+    {
+        // ...
+    }
+    
+We can then call it from the ``handle_leds()`` function. This function will use the same logic as the user-space application:
+
+.. code-block:: c
+
+    #define LED_LEFT 2
+    #define LED_CENTER 1
+    #define LED_RIGHT 0
+    #include <linux/input.h>
+    extern void send_led_request(int id, int brightness);
+    
+    void handle_leds(int keycode)
+    {
+    
+        printk("handle_leds()\n");
+        // Manage the LEDs according the button pressed
+        if(keycode == KEY_LEFT)
+        {
+        	printk("Got left\n");
+        	send_led_request(LED_LEFT, 1);
+        }
+        else if(keycode == KEY_RIGHT)
+        {
+        	printk("Got right\n");
+        	send_led_request(LED_RIGHT, 1);
+        }
+        else if(keycode == KEY_DOWN)
+        {
+        	printk("Got down\n");
+        	send_led_request(LED_LEFT, 0);
+        	send_led_request(LED_RIGHT, 0);
+        	send_led_request(LED_CENTER, 0);
+        }
+        else if(keycode == KEY_ENTER)
+        {
+        	printk("Got enter\n");
+        	send_led_request(LED_CENTER, 1);
+        }
+    }
+
+We can then see the proper working of our modified driver by monitoring the **DomU** and **Dom0** kernel logs::
+
+    [DOM-U] *** Welcome on REPTAR (HEIG-VD/REDS): use root/root to log in ***
+    reptar login: root
+    Password: 
+    # insmod /sp6.ko 
+    reptar_sp6: module starting...
+    [DOM-0] <4>Probing FPGA driver (device: fpga)
+    [DOM-0] <7>Registered led device: sp6_led0
+    [DOM-0] <7>Registered led device: sp6_led1
+    [DOM-0] <7>Registered led device: sp6_led2
+    [DOM-0] <7>Registered led device: sp6_led3
+    [DOM-0] <7>Registered led device: sp6_led4
+    [DOM-0] <7>Registered led device: sp6_led5
+    [DOM-0] <4>IRQ_CTR_REG = 0x0080
+    [DOM-0] <6>input: reptar_sp6_buttons as /devices/platform/fpga/reptar_sp6_buttons/input/input1
+    [DOM-0] <4>reptar_sp6: done.
+    # [DOM-0] <4>*** Serial input -> DOMU (type 'CTRL-a' three times to switch input to Xen).
+    [DOM-U] 
+    [DOM-U] *** Welcome on REPTAR (HEIG-VD/REDS): use root/root to log in ***
+    reptar login: root
+    [DOM-U] Password: 
+    [DOM-U] # QObject: Cannot create children for a parent that is in a different thread.
+    (Parent is QNativeSocketEngine(0x892210), parent's thread is QThread(0x6c2290), current thread is EvtThread(0x8bf070)
+    handle_leds()
+    [DOM-U] Got right
+    [DOM-U] handle_leds()
+    [DOM-U] Got right
+    [DOM-0] <4>receive_led_request(0, 1)
+    [DOM-0] <4>receive_led_request(0, 1)
+    [DOM-U] handle_leds()
+    [DOM-U] Got left
+    [DOM-U] handle_leds()
+    [DOM-U] Got left
+    [DOM-0] <4>receive_led_request(2, 1)
+    [DOM-0] <4>receive_led_request(2, 1)
+    [DOM-U] handle_leds()
+    [DOM-U] Got enter
+    [DOM-U] handle_leds()
+    [DOM-U] Got enter
+    [DOM-0] <4>receive_led_request(1, 1)
+    [DOM-0] <4>receive_led_request(1, 1)
+    [DOM-U] handle_leds()
+    [DOM-U] Got down
+    [DOM-U] handle_leds()
+    [DOM-U] Got down
+    [DOM-0] <4>receive_led_request(2, 0)
+    [DOM-0] <4>receive_led_request(0, 0)
+    [DOM-0] <4>receive_led_request(1, 0)
+    [DOM-0] <4>receive_led_request(2, 0)
+    [DOM-0] <4>receive_led_request(0, 0)
+    [DOM-0] <4>receive_led_request(1, 0)
+
+We can see that the **DomU** got the key events from the button and that it trigger the ``receive_led_request()`` IRQ in the **Dom0** in return. It works!
+
+**Note** that way of doing the things works, but its generaly a bad idea to put application logic in driver code.
 
     
 
