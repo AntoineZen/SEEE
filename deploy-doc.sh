@@ -10,6 +10,7 @@ cd ..
 
 # Publih
 git checkout gh-pages
+git pull
 cp -r report/build/html/* .
 git add -u
 git commit -m "Updated the html doc" -s
