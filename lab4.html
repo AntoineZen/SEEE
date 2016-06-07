@@ -89,6 +89,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#embeddedxen-environement-test">EmbeddedXEN environement test</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#sp6-driver-deployment-inside-dom-0">SP6 driver deployment inside DOM-0</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#dom-0-and-dom-u-ineraction-using-para-virtualized-input-interface">Dom-0 and Dom-U ineraction using para-virtualized input interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#led-interface-paravirtualization">LED interface paravirtualization</a></li>
 </ul>
 </li>
 </ul>
@@ -400,7 +401,173 @@
 </div>
 <div class="section" id="dom-0-and-dom-u-ineraction-using-para-virtualized-input-interface">
 <h2>Dom-0 and Dom-U ineraction using para-virtualized input interface<a class="headerlink" href="#dom-0-and-dom-u-ineraction-using-para-virtualized-input-interface" title="Permalink to this headline">¶</a></h2>
-<p>TODO</p>
+<p>First, we have to register the button driver to the XEN infracstructure, to tell that is is a front-end driver. This is preaty straytforward, we just have to call the xenvkbd_inputdev_regsiter() function from the driver probe function:</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="k">static</span> <span class="kt">int</span> <span class="nf">reptar_sp6_buttons_probe</span><span class="p">(</span><span class="k">struct</span> <span class="n">platform_device</span> <span class="o">*</span><span class="n">pdev</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">// ...</span>
+    <span class="k">struct</span> <span class="n">input_dev</span> <span class="o">*</span><span class="n">input</span><span class="p">;</span>
+
+
+    <span class="c1">// ...</span>
+
+    <span class="cm">/* Register the input device in XEN */</span>
+    <span class="n">xenvkbd_inputdev_register</span><span class="p">(</span><span class="n">input</span><span class="p">,</span> <span class="n">KEYBOARD</span><span class="p">);</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>After this, the button press are received by the <strong>DomU</strong>. We need alos a way to toggle the framebuffer from <strong>Dom0</strong> to <strong>DomU</strong> and vice-verca. For this, we can modifiy the threaded IRQ function to switch the framebuffer upon certain button press. The <code class="docutils literal"><span class="pre">reptar_sp6_buttons_irq_thread()</span></code> is modified as following:</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="k">static</span> <span class="kt">irqreturn_t</span> <span class="nf">reptar_sp6_buttons_irq_thread</span><span class="p">(</span><span class="kt">int</span> <span class="n">irq</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">dev_id</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="n">reptar_sp6_buttons</span> <span class="o">*</span><span class="n">dev</span> <span class="o">=</span> <span class="p">(</span><span class="k">struct</span> <span class="n">reptar_sp6_buttons</span> <span class="o">*</span><span class="p">)</span> <span class="n">dev_id</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">input_dev</span> <span class="o">*</span><span class="n">input</span> <span class="o">=</span> <span class="n">dev</span><span class="o">-&gt;</span><span class="n">input</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">pressed</span><span class="p">;</span>
+    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">key</span><span class="p">;</span>
+
+    <span class="c1">//printk(&quot;reptar_sp6_buttons_irq_thread()\n&quot;);</span>
+
+    <span class="k">do</span> <span class="p">{</span>
+      <span class="n">pressed</span> <span class="o">=</span> <span class="n">fls</span><span class="p">(</span><span class="n">dev</span><span class="o">-&gt;</span><span class="n">current_button</span><span class="p">);</span>
+
+      <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">pressed</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">IRQ_HANDLED</span><span class="p">;</span>
+
+      <span class="n">key</span> <span class="o">=</span> <span class="n">dev</span><span class="o">-&gt;</span><span class="n">pdata</span><span class="o">-&gt;</span><span class="n">keys</span><span class="p">[</span><span class="n">pressed</span><span class="o">-</span><span class="mi">1</span><span class="p">];</span>
+
+
+      <span class="k">if</span> <span class="p">(</span><span class="n">key</span> <span class="o">==</span> <span class="n">KEY_BACKSPACE</span><span class="p">)</span>
+      <span class="p">{</span>
+          <span class="n">omapfb_xen_switch_domain</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+          <span class="n">xenfb_set_focus</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+      <span class="p">}</span>
+      <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">key</span><span class="o">==</span> <span class="n">KEY_ESC</span><span class="p">)</span>
+      <span class="p">{</span>
+          <span class="n">omapfb_xen_switch_domain</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+          <span class="n">xenfb_set_focus</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+      <span class="p">}</span>
+      <span class="k">else</span>
+      <span class="p">{</span>
+
+          <span class="cm">/* Report key press and release */</span>
+          <span class="n">input_report_key</span><span class="p">(</span><span class="n">input</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+          <span class="n">input_sync</span><span class="p">(</span><span class="n">input</span><span class="p">);</span>
+
+          <span class="n">input_report_key</span><span class="p">(</span><span class="n">input</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+          <span class="n">input_sync</span><span class="p">(</span><span class="n">input</span><span class="p">);</span>
+      <span class="p">}</span>
+
+      <span class="n">dev</span><span class="o">-&gt;</span><span class="n">current_button</span> <span class="o">&amp;=</span> <span class="o">~</span><span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="n">pressed</span><span class="o">-</span><span class="mi">1</span><span class="p">));</span>
+
+    <span class="p">}</span> <span class="k">while</span> <span class="p">(</span><span class="n">dev</span><span class="o">-&gt;</span><span class="n">current_button</span><span class="p">);</span>
+
+    <span class="k">return</span> <span class="n">IRQ_HANDLED</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>So when the <em>ESC</em> key is pressed, we switch the framebuffer to <strong>Dom0</strong>. When the <em>BACKSPACE</em> key is pressed we switch it to <strong>DomU</strong>.</p>
+</div>
+<div class="section" id="led-interface-paravirtualization">
+<h2>LED interface paravirtualization<a class="headerlink" href="#led-interface-paravirtualization" title="Permalink to this headline">¶</a></h2>
+<p>In this part, first we need to implement the LEDs driver for the <strong>DomU</strong>. This goes in two parts. The <strong>DomU</strong> kernel needs a &#8220;front-end&#8221; driver that emulate the periferal interface and pass the event to the &#8220;back-end&#8221; driver, in the <strong>Dom0</strong>, that will actualy interact with the hardware. As on the driver lab, we need to create the periferals of class &#8220;leddriver&#8221; from the module probe funcion:</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="k">struct</span> <span class="n">xenvled_data</span> <span class="p">{</span>
+    <span class="kt">char</span>                <span class="o">*</span><span class="n">name</span><span class="p">;</span>
+    <span class="kt">int</span>                 <span class="n">id</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">led_classdev</span>     <span class="n">cdev</span><span class="p">;</span>
+<span class="p">};</span>
+
+
+<span class="k">struct</span> <span class="n">xenvled_data</span> <span class="n">leds</span><span class="p">[</span><span class="mi">6</span><span class="p">];</span>
+
+<span class="k">static</span> <span class="kt">int</span> <span class="nf">ledfront_probe</span><span class="p">(</span><span class="k">struct</span> <span class="n">xenbus_device</span> <span class="o">*</span><span class="n">dev</span><span class="p">,</span> <span class="k">const</span> <span class="k">struct</span> <span class="n">xenbus_device_id</span> <span class="o">*</span><span class="n">id</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">result</span><span class="p">;</span>
+
+    <span class="c1">//...</span>
+
+    <span class="k">for</span><span class="p">(</span><span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span><span class="o">&lt;</span> <span class="mi">6</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">leds</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">cdev</span><span class="p">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">leds</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">name</span><span class="p">;</span>
+        <span class="n">leds</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">cdev</span><span class="p">.</span><span class="n">brightness_set</span> <span class="o">=</span> <span class="n">ledfont_led_set</span><span class="p">;</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="n">led_classdev_register</span><span class="p">(</span><span class="o">&amp;</span><span class="n">dev</span><span class="o">-&gt;</span><span class="n">dev</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">leds</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">cdev</span><span class="p">);</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">printk</span><span class="p">(</span> <span class="s">&quot;can&#39;t allocate led driver %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">i</span><span class="p">);</span>
+            <span class="k">return</span> <span class="o">-</span><span class="n">ENOENT</span><span class="p">;</span>
+       <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="c1">//...</span>
+
+    <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>This will create the <code class="docutils literal"><span class="pre">/sys/class/leds/sp6_ledx</span></code> folder like in the driver lab. When <code class="docutils literal"><span class="pre">.../brightness</span></code> file write call back is then implement as following:</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="k">struct</span> <span class="n">xenvled_data</span> <span class="p">{</span>
+    <span class="kt">char</span>                            <span class="o">*</span><span class="n">name</span><span class="p">;</span>
+    <span class="kt">int</span>                                     <span class="n">id</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">led_classdev</span>     <span class="n">cdev</span><span class="p">;</span>
+<span class="p">};</span>
+
+
+<span class="k">struct</span> <span class="n">xenvled_data</span> <span class="n">leds</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="p">{.</span><span class="n">name</span><span class="o">=</span><span class="s">&quot;sp6_led0&quot;</span><span class="p">,</span> <span class="p">.</span><span class="n">id</span><span class="o">=</span><span class="mi">0</span><span class="p">},</span>
+    <span class="p">{.</span><span class="n">name</span><span class="o">=</span><span class="s">&quot;sp6_led1&quot;</span><span class="p">,</span> <span class="p">.</span><span class="n">id</span><span class="o">=</span><span class="mi">1</span><span class="p">},</span>
+    <span class="p">{.</span><span class="n">name</span><span class="o">=</span><span class="s">&quot;sp6_led2&quot;</span><span class="p">,</span> <span class="p">.</span><span class="n">id</span><span class="o">=</span><span class="mi">2</span><span class="p">},</span>
+    <span class="p">{.</span><span class="n">name</span><span class="o">=</span><span class="s">&quot;sp6_led3&quot;</span><span class="p">,</span> <span class="p">.</span><span class="n">id</span><span class="o">=</span><span class="mi">3</span><span class="p">},</span>
+    <span class="p">{.</span><span class="n">name</span><span class="o">=</span><span class="s">&quot;sp6_led4&quot;</span><span class="p">,</span> <span class="p">.</span><span class="n">id</span><span class="o">=</span><span class="mi">4</span><span class="p">},</span>
+    <span class="p">{.</span><span class="n">name</span><span class="o">=</span><span class="s">&quot;sp6_led5&quot;</span><span class="p">,</span> <span class="p">.</span><span class="n">id</span><span class="o">=</span><span class="mi">5</span><span class="p">},</span>
+<span class="p">};</span>
+
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">ledfont_led_set</span><span class="p">(</span><span class="k">struct</span> <span class="n">led_classdev</span> <span class="o">*</span><span class="n">led_cdev</span><span class="p">,</span> <span class="k">enum</span> <span class="n">led_brightness</span> <span class="n">value</span><span class="p">)</span>
+<span class="p">{</span>
+
+  <span class="kt">int</span> <span class="n">id</span><span class="p">;</span>
+  <span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
+
+  <span class="c1">// Find the id</span>
+  <span class="k">for</span><span class="p">(</span><span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">6</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">led_cdev</span> <span class="o">==</span> <span class="o">&amp;</span><span class="n">leds</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">cdev</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">id</span> <span class="o">=</span> <span class="n">leds</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">id</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="n">send_led_request</span><span class="p">(</span><span class="n">id</span><span class="p">,</span> <span class="n">value</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>This passes the led set event with is ID and value to the <strong>Dom0</strong> driver via the XEN bus (internal IPC between the Doms). This will trigger an callback in the <strong>Dom0</strong> in the form of an virtual interrupt comming from the hardware. This will be the code of this &#8220;interrupt&#8221;:</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="k">static</span> <span class="kt">void</span> <span class="nf">receive_led_request</span><span class="p">(</span><span class="kt">int</span> <span class="n">id</span><span class="p">,</span> <span class="kt">int</span> <span class="n">brightness</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="cm">/* How to interact with the LED subsystem and drive the LEDs? */</span>
+    <span class="n">printk</span><span class="p">(</span><span class="s">&quot;%s(%d, %d)</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">__func__</span><span class="p">,</span> <span class="n">id</span><span class="p">,</span> <span class="n">brightness</span><span class="p">);</span>
+
+    <span class="k">if</span><span class="p">(</span><span class="n">brightness</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="o">*</span><span class="n">led_reg</span> <span class="o">|=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">id</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">else</span>
+    <span class="p">{</span>
+        <span class="o">*</span><span class="n">led_reg</span> <span class="o">&amp;=</span> <span class="o">~</span><span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span><span class="n">id</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>This code simply write the hardware register, via the <code class="docutils literal"><span class="pre">led_reg</span></code> pointer. This pointer is global to the module (access limited to it using the <code class="docutils literal"><span class="pre">static</span></code> keyword) and intialized using <code class="docutils literal"><span class="pre">ioremap()</span></code> in the module probe() function:</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="k">static</span> <span class="kt">int</span> <span class="nf">ledback_probe</span><span class="p">(</span><span class="k">struct</span> <span class="n">xenbus_device</span> <span class="o">*</span><span class="n">dev</span><span class="p">,</span> <span class="k">const</span> <span class="k">struct</span> <span class="n">xenbus_device_id</span> <span class="o">*</span><span class="n">id</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">// ...</span>
+
+    <span class="n">led_reg</span> <span class="o">=</span> <span class="n">ioremap</span><span class="p">(</span><span class="n">FPGA_BASE</span> <span class="o">+</span> <span class="n">LED_OFFSET</span><span class="p">,</span> <span class="mi">4</span><span class="p">);</span>
+
+    <span class="c1">// ...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
 </div>
 </div>
 
